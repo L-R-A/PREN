@@ -1,10 +1,34 @@
 import cv2
 import numpy as np
 import os
+import json
 
 video_path = '../ressources/video_example/video_example.mp4'
 
-#region PREDEFINED COLOR BOUNDS
+#region CONFIGURATION CONSTANTS
+
+IN_DEBUG_MODE = True
+FRAME_STEP_BY_STEP = False
+
+ROTATION_SIDES = 4
+
+CHECKED_FRAMES_PER_SIDE = 10
+
+MIN_CONTOUR_AREA = 1000
+MIN_CONTOUR_HEIGHT = 100
+MIN_CONTOUR_WIDTH = 100
+
+TOLERANCE_CONTOUR_IS_AROUND_CENTER = 20
+TOLERANCE_IS_NEAR_TOP = 50
+TOLERANCE_IS_NEAR_BOTTOM = 50
+
+OUTPUT_FILE_NAME = "output.json"
+OUTPUT_FILE_DIR = "../tmp"
+
+
+#endregion
+
+#region PRESTRUCTURED LISTS / DICTIONARIES
 
 red_color = [
     {
@@ -43,6 +67,91 @@ light_grey_color = [
     }
 ]
 
+result = {
+    "time": "",
+    "config": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": "",
+        "6": "",
+        "7": "",
+        "8": ""
+    }
+}
+
+result_cache = {
+    "1": {
+        "color":"",
+        "y":0
+    },
+    "2": {
+        "color":"",
+        "y":0
+    },
+    "3": {
+        "color":"",
+        "y":0
+    },
+    "4": {
+        "color":"",
+        "y":0
+    },
+    "5": {
+        "color":"",
+        "y":0
+    },
+    "6": {
+        "color":"",
+        "y":0
+    },
+    "7": {
+        "color":"",
+        "y":0
+    },
+    "8": {
+        "color":"",
+        "y":0
+    }
+}
+
+
+quadrants = [
+    {
+        "lower_x": 0,
+        "upper_x": 0,
+        "lower_y": 0,
+        "upper_y": 0
+    },
+    {
+        "lower_x": 0,
+        "upper_x": 0,
+        "lower_y": 0,
+        "upper_y": 0
+    },
+    {
+        "lower_x": 0,
+        "upper_x": 0,
+        "lower_y": 0,
+        "upper_y": 0
+    },
+    {
+        "lower_x": 0,
+        "upper_x": 0,
+        "lower_y": 0,
+        "upper_y": 0
+    }
+]
+
+complete = {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+}
+
+
 #endregion
 
 #region METHODS TO CALCULATE SINGLE ROTATION TIME
@@ -66,7 +175,7 @@ def calculate_rectangle_simularity(rect1, rect2, tolerance=0.1):
 
 def calculate_rotation_time(color):
 
-    print("Calculate cycle time in frames...")
+    print_out("Calculate cycle time in frames...")
 
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
 
@@ -99,13 +208,13 @@ def calculate_rotation_time(color):
         # Calculate frame amount until simular starting patterns reoccur
         # Ignore the first few frames
         if (frame_count > 20 and calculate_rectangle_simularity(position_marker_first_frame, objects[0])):
-            print(f"Finished calculating cycle time: {frame_count} frames")
+            print_out(f"Finished calculating cycle time: {frame_count} frames")
             return frame_count
 
 
 #endregion
 
-
+#region MASK CREATION
 
 def create_color_mask(hsv, colors):
 
@@ -120,11 +229,61 @@ def create_color_mask(hsv, colors):
     return mask
 
 
+def create_contour_mask(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5,5), 0)
+    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+
+    image_show("thresh", thresh)
+
+    contour_thickness = 20
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    max_area = 0
+    c = 0
+    for i in contours:
+            area = cv2.contourArea(i)
+            if area > MIN_CONTOUR_AREA:
+                if area > max_area:
+                    max_area = area
+                    best_cnt = i
+                    frame = cv2.drawContours(frame, contours, c, (0, 0, 0), contour_thickness)
+            c+=1
+
+
+
+    mask = np.zeros((gray.shape),np.uint8)
+    cv2.drawContours(mask,[best_cnt],0,255,-1)
+    cv2.drawContours(mask,[best_cnt],0,0,2)
+
+    out = np.zeros_like(gray)
+    out[mask == 255] = gray[mask == 255]
+
+    blur = cv2.GaussianBlur(out, (5,5), 0)
+    # thresh = cv2.adaptiveThreshold(blur,255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+
+    # Apply morphological operations to connect nearby contours
+    kernel = np.ones((10, 10), np.uint8)
+    dilated = cv2.dilate(thresh, kernel, iterations=1)
+    eroded = cv2.erode(dilated, kernel, iterations=1)
+
+    contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    c = 0
+    for i in contours:
+            area = cv2.contourArea(i)
+            cv2.drawContours(frame, contours, c, (0, 0, 0), contour_thickness)
+            c+=1
+
+    return frame
+
+#endregion
+
+#region CORDINATE CALCULATION
+
 def calculate_object_cordinates_with_contour(frame):
-
-    minimal_object_height = 100
-    minimal_object_width = 100
-
     contours, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     objects = []
@@ -133,12 +292,10 @@ def calculate_object_cordinates_with_contour(frame):
 
         contour_area = cv2.contourArea(contour)
 
-        if contour_area >= 1000:            
+        if contour_area >= MIN_CONTOUR_AREA:            
             x, y, w, h = cv2.boundingRect(contour)
 
-            # Ignore objects that are smaller than a specific height
-            if  h > minimal_object_height and w > minimal_object_width:
-                # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            if  h > MIN_CONTOUR_HEIGHT and w > MIN_CONTOUR_WIDTH:
                 objects.append((x, y, w, h))
 
     return objects
@@ -151,7 +308,13 @@ def calcualte_object_center_cordinates_with_edge_detection(frame):
 
     edges = cv2.Canny(thresh, threshold1=30, threshold2=100)
 
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Apply morphological operations to connect nearby contours
+    kernel = np.ones((10, 10), np.uint8)
+    dilated = cv2.dilate(edges, kernel, iterations=1)
+    eroded = cv2.erode(dilated, kernel, iterations=1)
+
+
+    contours, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     objects = []
 
@@ -160,7 +323,7 @@ def calcualte_object_center_cordinates_with_edge_detection(frame):
         contour_area = cv2.contourArea(contour)
 
         # ToDo: refactor threshold
-        if contour_area >= 1000:
+        if contour_area >= MIN_CONTOUR_HEIGHT:
             M = cv2.moments(contour)
             if M["m00"] != 0:
                 x = int(M["m10"] / M["m00"])
@@ -168,12 +331,14 @@ def calcualte_object_center_cordinates_with_edge_detection(frame):
             else:
                 x, y = 0, 0
 
-            # Only necesseray for display (debug)
-            cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)  # Red dot
-            cv2.putText(frame, f"({x}, {y})", (x - 50, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            
-            objects.append((x, y))
-        
+            # Disqualify contours centers, which aren't near the center of a cube
+            if is_near_center_x_position(x, TOLERANCE_CONTOUR_IS_AROUND_CENTER) and not is_lesser_or_near_top(y, TOLERANCE_IS_NEAR_TOP) and not is_further_or_near_bottom(y, TOLERANCE_IS_NEAR_BOTTOM):
+                objects.append((x, y))
+
+                if IN_DEBUG_MODE:
+                    cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
+                    cv2.putText(frame, f"({x}, {y})", (x - 50, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
     return objects
 
 
@@ -193,7 +358,6 @@ def calculate_object_cordinates_with_blob_detection(mask, frame):
         x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
         w = int(keypoint.size)
         h =int(keypoint.size)
-        print(x, y, w, h)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         object_coordinates.append((x, y, w, h))
@@ -202,105 +366,42 @@ def calculate_object_cordinates_with_blob_detection(mask, frame):
 
     return object_coordinates
 
-
-def create_contour_mask(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    max_area = 0
-    c = 0
-    for i in contours:
-            area = cv2.contourArea(i)
-            if area > 1000:
-                if area > max_area:
-                    max_area = area
-                    best_cnt = i
-                    frame = cv2.drawContours(frame, contours, c, (0, 0, 0), 4)
-            c+=1
+#endregion
 
 
+def set_quadrants():
 
-    mask = np.zeros((gray.shape),np.uint8)
-    cv2.drawContours(mask,[best_cnt],0,255,-1)
-    cv2.drawContours(mask,[best_cnt],0,0,2)
-
-    out = np.zeros_like(gray)
-    out[mask == 255] = gray[mask == 255]
-
-
-
-    blur = cv2.GaussianBlur(out, (5,5), 0)
-    # thresh = cv2.adaptiveThreshold(blur,255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-
-    # Apply morphological operations to connect nearby contours
-    kernel = np.ones((10, 10), np.uint8)
-    dilated = cv2.dilate(thresh, kernel, iterations=1)
-    eroded = cv2.erode(dilated, kernel, iterations=1)
-
-    contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    c = 0
-    for i in contours:
-            area = cv2.contourArea(i)
-            cv2.drawContours(frame, contours, c, (0, 0, 0), 4 )
-            c+=1
-
-
-quadrants = [
-    {
-        "lower_x": 0,
-        "upper_x": 0,
-        "lower_y": 0,
-        "upper_y": 0
-    },
-    {
-        "lower_x": 0,
-        "upper_x": 0,
-        "lower_y": 0,
-        "upper_y": 0
-    },
-    {
-        "lower_x": 0,
-        "upper_x": 0,
-        "lower_y": 0,
-        "upper_y": 0
-    },
-    {
-        "lower_x": 0,
-        "upper_x": 0,
-        "lower_y": 0,
-        "upper_y": 0
-    }
-]
-
-def set_quadrants(x, y, width, height):
+    # ToDo: What if there is only one row of cubes or one column of cubes? object widht and height would be wrong!
+    # Maybe have to set width and height of complete object static
 
     # ToDo: Dynamically calculate offset
-    Y_OFFSET = 100
+    Y_OFFSET = 50
 
-    quadrants[0]["lower_x"] = x
-    quadrants[0]["upper_x"] = x + (width / 2)
-    quadrants[0]["lower_y"] = (y + (height / 2  )) + Y_OFFSET
-    quadrants[0]["upper_y"] = y + height
+    center_x.append(complete["x"] + (complete["width"] / 4))
+    center_x.append(complete["x"] + ((complete["width"] / 4) * 3))
 
-    quadrants[1]["lower_x"] = x + (width / 2)
-    quadrants[1]["upper_x"] = x + width
-    quadrants[1]["lower_y"] = (y + (height / 2  )) + Y_OFFSET
-    quadrants[1]["upper_y"] = y + height
+    quadrants[0]["lower_x"] = complete["x"]
+    quadrants[0]["upper_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[0]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[0]["upper_y"] = complete["y"] + complete["height"]
 
-    quadrants[2]["lower_x"] = x
-    quadrants[2]["upper_x"] = x + (width / 2)
-    quadrants[2]["lower_y"] = y
-    quadrants[2]["lower_y"] = (y + (height / 2  )) + Y_OFFSET
+    quadrants[1]["lower_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[1]["upper_x"] = complete["x"] + complete["width"]
+    quadrants[1]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[1]["upper_y"] = complete["y"] + complete["height"]
 
-    quadrants[3]["lower_x"] = x + (width / 2)
-    quadrants[3]["upper_x"] = x + width
-    quadrants[3]["lower_y"] = y
-    quadrants[3]["upper_y"] = (y + (height / 2  )) + Y_OFFSET
+    quadrants[2]["lower_x"] = complete["x"]
+    quadrants[2]["upper_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[2]["lower_y"] = complete["y"]
+    quadrants[2]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+
+    print(complete["y"])
+    print((complete["y"] + (complete["height"] / 2  )) + Y_OFFSET)
+
+    quadrants[3]["lower_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[3]["upper_x"] = complete["x"] + complete["width"]
+    quadrants[3]["lower_y"] = complete["y"]
+    quadrants[3]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
 
 
 def calculate_quadrant(x, y):
@@ -318,6 +419,36 @@ def calculate_quadrant(x, y):
         
     return 5
 
+center_x = []
+
+def is_near_center_x_position(x, tolerance=20):
+
+    for cX in center_x:
+        if abs(x - cX) <= tolerance:
+            return True
+    
+    return False
+
+
+def is_lesser_or_near_top(y, tolerance=20):
+    if y <= complete["y"]:
+        return True
+
+    if abs(y - complete["y"]) <= tolerance:
+        return True
+
+    return False
+
+def is_further_or_near_bottom(y, tolerance=20):
+
+    if y > (complete["y"] + complete['height']):
+        return True
+
+    if abs(y - (complete["y"] +  complete["height"])) <= tolerance:
+        return True
+    
+    return False
+
 def calcualte_color_at_cordinate(frame, x, y):
     pixel = frame[y, x]
 
@@ -326,7 +457,6 @@ def calcualte_color_at_cordinate(frame, x, y):
     merged_colors = red_color + yellow_color + blue_color
 
     for color in merged_colors:
-        print(hsv_color)
         if (color["lower_bounds"][0] <= hsv_color[0] <= color["upper_bounds"][0] and
             color["lower_bounds"][1] <= hsv_color[1] <= color["upper_bounds"][1] and
             color["lower_bounds"][2] <= hsv_color[2] <= color["upper_bounds"][2]):
@@ -334,95 +464,243 @@ def calcualte_color_at_cordinate(frame, x, y):
 
 
 def is_approx_modular(value1, value2, tolerance=10):
-
     if value2 == 0:
         return True
-    
-    print(value1 % value2)
 
     return 0 <= value1 % value2 <= tolerance
 
+def image_show(name, frame):
+    if IN_DEBUG_MODE:
+        cv2.imshow(name, frame)
+
+def print_out(message, is_json = False):
+    if IN_DEBUG_MODE:
+        if is_json:
+            print(json.dumps((message), indent=2))
+        else: 
+            print(message)
+
+def calculate_average_y(y1, y2, y3, y4):
+    return (y1 + y2 + y3 + y4) / 4
+
+def is_in_range(y, avg, tolerance = 5):
+    return abs(y - avg) <= tolerance
+
+def remove_invalid_points(res):
+    average_bottom_row = calculate_average_y(res["1"]["y"], res["2"]["y"], res["3"]["y"], res["4"]["y"])
+
+    if not is_in_range(res["1"]["y"], average_bottom_row):
+        if res["1"]["y"] < average_bottom_row:
+            res["1"]["color"] = ""
+            res["1"]["y"] = ""
+
+    if not is_in_range(res["2"]["y"], average_bottom_row):
+        if res["2"]["y"] < average_bottom_row:
+            res["2"]["color"] = ""
+            res["2"]["y"] = ""
+
+    if not is_in_range(res["3"]["y"], average_bottom_row):
+        if res["3"]["y"] < average_bottom_row:
+            res["3"]["color"] = ""
+            res["3"]["y"] = ""
+
+    if not is_in_range(res["4"]["y"], average_bottom_row):
+        if res["4"]["y"] < average_bottom_row:
+            res["4"]["color"] = ""
+            res["4"]["y"] = ""
+            
+
+    average_upper_row = calculate_average_y(res["5"]["y"], res["6"]["y"], res["7"]["y"], res["8"]["y"])
+
+    print(average_upper_row)
+
+    if not is_in_range(res["5"]["y"], average_upper_row):
+        if res["5"]["y"] < average_upper_row:
+            res["5"]["color"] = ""
+            res["5"]["y"] = ""
+
+    if not is_in_range(res["6"]["y"], average_upper_row):
+        if res["6"]["y"] < average_upper_row:
+            res["6"]["color"] = ""
+            res["6"]["y"] = ""
+
+    if not is_in_range(res["7"]["y"], average_upper_row):
+        if res["7"]["y"] < average_upper_row:
+            res["7"]["color"] = ""
+            res["7"]["y"] = ""
+
+    if not is_in_range(res["8"]["y"], average_upper_row):
+        if res["8"]["y"] < average_upper_row:
+            res["8"]["color"] = ""
+            res["8"]["y"] = ""
+
+
 def main():
     rotation_time_in_frames = calculate_rotation_time(light_grey_color)
-
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
 
     frame_count = 0
+    side_count = 0
 
-    debug = True
+    cubes_cordinates =  []
+
 
     while True:
 
         exit_analyse = False
 
         ret, frame = cap.read()
+        result = frame
 
-
-        # Exit if plate has cycled ones
+        # Exit if plate has cycled ones (going back to start position isn't necessary)
         if frame_count >= rotation_time_in_frames:
+            remove_invalid_points(result_cache)
+            print_out(result_cache, True)
+            try:
+                log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILE_DIR)
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir)
+
+                with open(os.path.join(log_dir, OUTPUT_FILE_NAME), "a") as file:
+                    file.write(json.dumps(result_cache) + '\n')
+            except Exception as e:
+                print_out("Writing to log file didn't work!")
+                print_out(e)
+
             break
 
-
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-        #cropped_frame = frame[ cordinates_complete[0][1]:cordinates_complete[0][1] + cordinates_complete[0][3], cordinates_complete[0][0]:cordinates_complete[0][0] + cordinates_complete[0][2]]
         # hsv = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
-
-        mask_complete = create_color_mask(hsv, red_color + yellow_color + blue_color)
-        # mask_red = create_color_mask(hsv, red_color)
-        # mask_yellow = create_color_mask(hsv, yellow_color)
-        # mask_blue = create_color_mask(hsv, blue_color)
 
         # print(cv2.countNonZero(mask_complete))
         # print(cv2.countNonZero(mask_red))
         # print(cv2.countNonZero(mask_yellow))
         # print(cv2.countNonZero(mask_blue))
 
-        result_complete = cv2.bitwise_and(frame, frame, mask=mask_complete)
-        # result_red = cv2.bitwise_and(frame, frame, mask=mask_red)
-        # result_yellow = cv2.bitwise_and(frame, frame, mask=mask_yellow)
-        # result_blue = cv2.bitwise_and(frame, frame, mask=mask_blue)
 
         # ToDo: Dynamically calculate a frame the starting frame    
         if frame_count == 0:
-            cordinates_complete = calculate_object_cordinates_with_contour(mask_complete)
-            set_quadrants(cordinates_complete[0][0], cordinates_complete[0][1], cordinates_complete[0][2], cordinates_complete[0][3])
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
+            cubes_cordinates = calculate_object_cordinates_with_contour(color_mask)
 
-        # cordinates_red = calculate_object_cordinates_with_blob_detection(mask_red, result_red)
-        # cordinates_yellow = calculate_object_cordinates_with_blob_detection(mask_yellow, result_yellow)
-        # cordinates_blue = calculate_object_cordinates_with_blob_detection(mask_blue, result_blue)
+            complete["x"] = cubes_cordinates[0][0]
+            complete["y"] = cubes_cordinates[0][1]
+            complete["width"] = cubes_cordinates[0][2]
+            complete["height"] = cubes_cordinates[0][3]
 
-        create_contour_mask(result_complete)
-        # create_contour_mask(result_red)
-        # create_contour_mask(result_yellow)
-        # create_contour_mask(result_blue)
+            set_quadrants()
 
-        # cordinates_red = calculate_object_cordinates_with_contour(result_red)
-        # cordinates_yellow = calculate_object_cordinates_with_contour(result_yellow)
-        # cordinates_blue = calculate_object_cordinates_with_contour(result_blue)
 
         # ToDo: refactor this!!!!
-        if is_approx_modular(frame_count, (rotation_time_in_frames / 4) - 5):
-            cordinates = calcualte_object_center_cordinates_with_edge_detection(result_complete)
+        if is_approx_modular(frame_count, (rotation_time_in_frames / 4)):
+
+            # frame = frame[ cubes_cordinates[0][1]:cubes_cordinates[0][1] + cubes_cordinates[0][3], cubes_cordinates[0][0]:cubes_cordinates[0][0] + cubes_cordinates[0][2]]
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
+
+            result_color = cv2.bitwise_and(frame, frame, mask=color_mask)
+
+            result_contour = create_contour_mask(result_color)
+
+            result = result_contour
+
+            cordinates = calcualte_object_center_cordinates_with_edge_detection(result)
+
+            #print_out(f"Frame: {frame_count} - Side: {side_count + 1}")
+
             
             for c in cordinates:
-                print("CUBE - ", "QUADRANT: ", calculate_quadrant(c[0], c[1]), "COLOR: ", calcualte_color_at_cordinate(frame, c[0], c[1]))
+                # print("CUBE - ", "QUADRANT: ", calculate_quadrant(c[0], c[1]), "COLOR: ", calcualte_color_at_cordinate(frame, c[0], c[1]))
 
+                quadrant = calculate_quadrant(c[0], c[1])
+                color = calcualte_color_at_cordinate(frame, c[0], c[1])
+                #print_out(f"Quadrant: {quadrant}, Color: {color}, Y:{c[1]}")
+
+
+                if side_count == 0:
+                    if quadrant == 1:
+                        if  result_cache["4"]["y"] < c[1]:
+                            result_cache["4"]["color"] = color
+                            result_cache["4"]["y"] = c[1]
+                    if quadrant == 2:
+                        if  result_cache["1"]["y"] < c[1]:
+                            result_cache["1"]["color"] = color
+                            result_cache["1"]["y"] = c[1]  
+                    if quadrant == 3:
+                        if  result_cache["8"]["y"] < c[1]:
+                            result_cache["8"]["color"] = color
+                            result_cache["8"]["y"] = c[1]
+                    if quadrant == 4:
+                        if  result_cache["5"]["y"] < c[1]:
+                            result_cache["5"]["color"] = color
+                            result_cache["5"]["y"] = c[1]
+
+                if side_count == 1:
+                    if quadrant == 1:
+                        if  result_cache["1"]["y"] < c[1]:
+                            result_cache["1"]["color"] = color
+                            result_cache["1"]["y"] = c[1]
+                    if quadrant == 2:
+                        if result_cache["2"]["y"] < c[1]:
+                            result_cache["2"]["color"] = color
+                            result_cache["2"]["y"] = c[1]  
+                    if quadrant == 3:
+                        if result_cache["5"]["y"] < c[1]:
+                            result_cache["5"]["color"] = color
+                            result_cache["5"]["y"] = c[1]
+                    if quadrant == 4:
+                        if result_cache["6"]["y"] < c[1]:
+                            result_cache["6"]["color"] = color
+                            result_cache["6"]["y"] = c[1]
+
+                if side_count == 2:
+                    if quadrant == 1:
+                        if result_cache["2"]["y"] < c[1]:
+                            result_cache["2"]["color"] = color
+                            result_cache["2"]["y"] = c[1]
+                    if quadrant == 2:
+                        if result_cache["3"]["y"] < c[1]:
+                            result_cache["3"]["color"] = color
+                            result_cache["3"]["y"] = c[1]  
+                    if quadrant == 3:
+                        if result_cache["6"]["y"] < c[1]:
+                            result_cache["6"]["color"] = color
+                            result_cache["6"]["y"] = c[1]
+                    if quadrant == 4:
+                        if result_cache["7"]["y"] < c[1]:
+                            result_cache["7"]["color"] = color
+                            result_cache["7"]["y"] = c[1]                        
+                               
+                if side_count == 3:
+                    if quadrant == 1:
+                        if result_cache["3"]["y"] < c[1]:
+                            result_cache["3"]["color"] = color
+                            result_cache["3"]["y"] = c[1]
+                    if quadrant == 2:
+                        if result_cache["4"]["y"] < c[1]:
+                            result_cache["4"]["color"] = color
+                            result_cache["4"]["y"] = c[1]  
+                    if quadrant == 3:
+                        if result_cache["7"]["y"] < c[1]:
+                            result_cache["7"]["color"] = color
+                            result_cache["7"]["y"] = c[1]
+                    if quadrant == 4:
+                        if result_cache["8"]["y"] < c[1]:
+                            result_cache["8"]["color"] = color
+                            result_cache["8"]["y"] = c[1]         
             
-
-            
- 
-            
-
-
-        cv2.imshow('Original', frame)
-        cv2.imshow('All cubes', result_complete)
-        # cv2.imshow('Red cubes', result_red)
-        # cv2.imshow('Yellow cubes', result_yellow)
-        # cv2.imshow('Blue cubes', result_blue)
+            # Go to next side, after the last frame was checked
+            if (frame_count % ((rotation_time_in_frames) / ROTATION_SIDES)) - CHECKED_FRAMES_PER_SIDE == 0:
+                if side_count == ROTATION_SIDES - 1:
+                    side_count = 0
+                else:
+                    side_count = side_count + 1
+                
+        image_show('Original', frame)
+        image_show('Result', result)    
 
         # Run frame after frame for debugging purposes
-        if debug:
+        if FRAME_STEP_BY_STEP and IN_DEBUG_MODE:
             while True:
                 # Press enter to run next frame
                 if cv2.waitKey(1) == 13:
