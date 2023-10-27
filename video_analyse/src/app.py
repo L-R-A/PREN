@@ -144,6 +144,20 @@ quadrants = [
     }
 ]
 
+quadrant_enum = {
+    "QUADRANT_ONE": 0,
+    "QUADRANT_TWO": 1,
+    "QUADRANT_THREE": 2,
+    "QUADRANT_FOUR": 3
+}
+
+sides_enum = {
+    "SIDE_ONE": 0,
+    "SIDE_TWO": 1,
+    "SIDE_THREE": 2,
+    "SIDE_FOUR": 3
+}
+
 complete = {
     "x": 0,
     "y": 0,
@@ -151,6 +165,45 @@ complete = {
     "height": 0
 }
 
+center_x = []
+
+#endregion
+
+#region HELPER METHODS
+
+def calcualte_color_at_cordinate(frame, x, y):
+    pixel = frame[y, x]
+
+    hsv_color = cv2.cvtColor(np.uint8([[pixel]]), cv2.COLOR_BGR2HSV)[0][0]
+
+    merged_colors = red_color + yellow_color + blue_color
+
+    for color in merged_colors:
+        if (color["lower_bounds"][0] <= hsv_color[0] <= color["upper_bounds"][0] and
+            color["lower_bounds"][1] <= hsv_color[1] <= color["upper_bounds"][1] and
+            color["lower_bounds"][2] <= hsv_color[2] <= color["upper_bounds"][2]):
+            return color["color_name"]
+
+
+def is_approx_modular(value1, value2, tolerance=10):
+    if value2 == 0:
+        return True
+
+    return 0 <= value1 % value2 <= tolerance
+
+def image_show(name, frame):
+    if IN_DEBUG_MODE:
+        cv2.imshow(name, frame)
+
+def print_out(message, is_json = False):
+    if IN_DEBUG_MODE:
+        if is_json:
+            print(json.dumps((message), indent=2))
+        else: 
+            print(message)
+
+def is_in_range(value1, value2, tolerance=10):
+    return abs(value1 - value2) <= tolerance
 
 #endregion
 
@@ -301,6 +354,39 @@ def calculate_object_cordinates_with_contour(frame):
     return objects
 
 
+#region METHODS TO DISQUALIFY CENTER POINTS
+
+def is_near_center_x_position(x, tolerance=20):
+
+    for cX in center_x:
+        if is_in_range(x, cX, tolerance):
+            return True
+    
+    return False
+
+
+def is_lesser_or_near_top(y, tolerance=20):
+    if y <= complete["y"]:
+        return True
+
+    if is_in_range(y, complete["y"], tolerance):
+        return True
+
+    return False
+
+def is_further_or_near_bottom(y, tolerance=20):
+
+    if y > (complete["y"] + complete['height']):
+        return True
+
+    if is_in_range(y, complete["y"] +  complete["height"], tolerance):
+        return True
+    
+    return False
+
+#endregion
+
+
 def calcualte_object_center_cordinates_with_edge_detection(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
@@ -331,9 +417,9 @@ def calcualte_object_center_cordinates_with_edge_detection(frame):
             else:
                 x, y = 0, 0
 
-            # Disqualify contours centers, which aren't near the center of a cube
+            # Disqualify center points
             if is_near_center_x_position(x, TOLERANCE_CONTOUR_IS_AROUND_CENTER) and not is_lesser_or_near_top(y, TOLERANCE_IS_NEAR_TOP) and not is_further_or_near_bottom(y, TOLERANCE_IS_NEAR_BOTTOM):
-                objects.append((x, y))
+                objects.append({"x": x, "y": y})
 
                 if IN_DEBUG_MODE:
                     cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
@@ -368,6 +454,7 @@ def calculate_object_cordinates_with_blob_detection(mask, frame):
 
 #endregion
 
+#region QUADRANT METHODS
 
 def set_quadrants():
 
@@ -380,159 +467,100 @@ def set_quadrants():
     center_x.append(complete["x"] + (complete["width"] / 4))
     center_x.append(complete["x"] + ((complete["width"] / 4) * 3))
 
-    quadrants[0]["lower_x"] = complete["x"]
-    quadrants[0]["upper_x"] = complete["x"] + (complete["width"] / 2)
-    quadrants[0]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
-    quadrants[0]["upper_y"] = complete["y"] + complete["height"]
+    quadrants[quadrant_enum["QUADRANT_ONE"]]["lower_x"] = complete["x"]
+    quadrants[quadrant_enum["QUADRANT_ONE"]]["upper_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[quadrant_enum["QUADRANT_ONE"]]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[quadrant_enum["QUADRANT_ONE"]]["upper_y"] = complete["y"] + complete["height"]
 
-    quadrants[1]["lower_x"] = complete["x"] + (complete["width"] / 2)
-    quadrants[1]["upper_x"] = complete["x"] + complete["width"]
-    quadrants[1]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
-    quadrants[1]["upper_y"] = complete["y"] + complete["height"]
+    quadrants[quadrant_enum["QUADRANT_TWO"]]["lower_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[quadrant_enum["QUADRANT_TWO"]]["upper_x"] = complete["x"] + complete["width"]
+    quadrants[quadrant_enum["QUADRANT_TWO"]]["lower_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[quadrant_enum["QUADRANT_TWO"]]["upper_y"] = complete["y"] + complete["height"]
 
-    quadrants[2]["lower_x"] = complete["x"]
-    quadrants[2]["upper_x"] = complete["x"] + (complete["width"] / 2)
-    quadrants[2]["lower_y"] = complete["y"]
-    quadrants[2]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[quadrant_enum["QUADRANT_THREE"]]["lower_x"] = complete["x"]
+    quadrants[quadrant_enum["QUADRANT_THREE"]]["upper_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[quadrant_enum["QUADRANT_THREE"]]["lower_y"] = complete["y"]
+    quadrants[quadrant_enum["QUADRANT_THREE"]]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
 
-    print(complete["y"])
-    print((complete["y"] + (complete["height"] / 2  )) + Y_OFFSET)
-
-    quadrants[3]["lower_x"] = complete["x"] + (complete["width"] / 2)
-    quadrants[3]["upper_x"] = complete["x"] + complete["width"]
-    quadrants[3]["lower_y"] = complete["y"]
-    quadrants[3]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
+    quadrants[quadrant_enum["QUADRANT_FOUR"]]["lower_x"] = complete["x"] + (complete["width"] / 2)
+    quadrants[quadrant_enum["QUADRANT_FOUR"]]["upper_x"] = complete["x"] + complete["width"]
+    quadrants[quadrant_enum["QUADRANT_FOUR"]]["lower_y"] = complete["y"]
+    quadrants[quadrant_enum["QUADRANT_FOUR"]]["upper_y"] = (complete["y"] + (complete["height"] / 2  )) + Y_OFFSET
 
 
 def calculate_quadrant(x, y):
-    if quadrants[0]["lower_x"] <= x <= quadrants[0]["upper_x"]:
-        if quadrants[0]["lower_y"] <= y <= quadrants[0]["upper_y"]:
-            return 1
+    if quadrants[quadrant_enum["QUADRANT_ONE"]]["lower_x"] <= x <= quadrants[quadrant_enum["QUADRANT_ONE"]]["upper_x"]:
+        if quadrants[quadrant_enum["QUADRANT_ONE"]]["lower_y"] <= y <= quadrants[quadrant_enum["QUADRANT_ONE"]]["upper_y"]:
+            return quadrant_enum["QUADRANT_ONE"]
         else:
-            return 3
+            return quadrant_enum["QUADRANT_THREE"]
     
-    if quadrants[1]["lower_x"] <= x <= quadrants[1]["upper_x"]:
-        if quadrants[1]["lower_y"] <= y <= quadrants[1]["upper_y"]:
-            return 2
+    if quadrants[quadrant_enum["QUADRANT_TWO"]]["lower_x"] <= x <= quadrants[quadrant_enum["QUADRANT_TWO"]]["upper_x"]:
+        if quadrants[quadrant_enum["QUADRANT_TWO"]]["lower_y"] <= y <= quadrants[quadrant_enum["QUADRANT_TWO"]]["upper_y"]:
+            return quadrant_enum["QUADRANT_TWO"]
         else:
-            return 4
+            return quadrant_enum["QUADRANT_FOUR"]
         
     return 5
 
-center_x = []
-
-def is_near_center_x_position(x, tolerance=20):
-
-    for cX in center_x:
-        if abs(x - cX) <= tolerance:
-            return True
-    
-    return False
-
-
-def is_lesser_or_near_top(y, tolerance=20):
-    if y <= complete["y"]:
-        return True
-
-    if abs(y - complete["y"]) <= tolerance:
-        return True
-
-    return False
-
-def is_further_or_near_bottom(y, tolerance=20):
-
-    if y > (complete["y"] + complete['height']):
-        return True
-
-    if abs(y - (complete["y"] +  complete["height"])) <= tolerance:
-        return True
-    
-    return False
-
-def calcualte_color_at_cordinate(frame, x, y):
-    pixel = frame[y, x]
-
-    hsv_color = cv2.cvtColor(np.uint8([[pixel]]), cv2.COLOR_BGR2HSV)[0][0]
-
-    merged_colors = red_color + yellow_color + blue_color
-
-    for color in merged_colors:
-        if (color["lower_bounds"][0] <= hsv_color[0] <= color["upper_bounds"][0] and
-            color["lower_bounds"][1] <= hsv_color[1] <= color["upper_bounds"][1] and
-            color["lower_bounds"][2] <= hsv_color[2] <= color["upper_bounds"][2]):
-            return color["color_name"]
-
-
-def is_approx_modular(value1, value2, tolerance=10):
-    if value2 == 0:
-        return True
-
-    return 0 <= value1 % value2 <= tolerance
-
-def image_show(name, frame):
-    if IN_DEBUG_MODE:
-        cv2.imshow(name, frame)
-
-def print_out(message, is_json = False):
-    if IN_DEBUG_MODE:
-        if is_json:
-            print(json.dumps((message), indent=2))
-        else: 
-            print(message)
-
-def calculate_average_y(y1, y2, y3, y4):
-    return (y1 + y2 + y3 + y4) / 4
-
-def is_in_range(y, avg, tolerance = 5):
-    return abs(y - avg) <= tolerance
+#endregion
 
 def remove_invalid_points(res):
-    average_bottom_row = calculate_average_y(res["1"]["y"], res["2"]["y"], res["3"]["y"], res["4"]["y"])
+    smallest_y = min(res["1"]["y"], res["2"]["y"], res["3"]["y"], res["4"]["y"])
 
-    if not is_in_range(res["1"]["y"], average_bottom_row):
-        if res["1"]["y"] < average_bottom_row:
-            res["1"]["color"] = ""
-            res["1"]["y"] = ""
+    if not is_in_range(res["1"]["y"], smallest_y):
+        res["1"]["color"] = ""
+        res["1"]["y"] = ""
 
-    if not is_in_range(res["2"]["y"], average_bottom_row):
-        if res["2"]["y"] < average_bottom_row:
-            res["2"]["color"] = ""
-            res["2"]["y"] = ""
+    if not is_in_range(res["2"]["y"], smallest_y):
+        res["2"]["color"] = ""
+        res["2"]["y"] = ""
 
-    if not is_in_range(res["3"]["y"], average_bottom_row):
-        if res["3"]["y"] < average_bottom_row:
-            res["3"]["color"] = ""
-            res["3"]["y"] = ""
+    if not is_in_range(res["3"]["y"], smallest_y):
+        res["3"]["color"] = ""
+        res["3"]["y"] = ""
 
-    if not is_in_range(res["4"]["y"], average_bottom_row):
-        if res["4"]["y"] < average_bottom_row:
-            res["4"]["color"] = ""
-            res["4"]["y"] = ""
+    if not is_in_range(res["4"]["y"], smallest_y):
+        res["4"]["color"] = ""
+        res["4"]["y"] = ""
             
 
-    average_upper_row = calculate_average_y(res["5"]["y"], res["6"]["y"], res["7"]["y"], res["8"]["y"])
+    biggest_y = max(res["5"]["y"], res["6"]["y"], res["7"]["y"], res["8"]["y"])
 
-    print(average_upper_row)
+    if not is_in_range(res["5"]["y"], biggest_y):
+        res["5"]["color"] = ""
+        res["5"]["y"] = ""
 
-    if not is_in_range(res["5"]["y"], average_upper_row):
-        if res["5"]["y"] < average_upper_row:
-            res["5"]["color"] = ""
-            res["5"]["y"] = ""
+    if not is_in_range(res["6"]["y"], biggest_y):
+        res["6"]["color"] = ""
+        res["6"]["y"] = ""
 
-    if not is_in_range(res["6"]["y"], average_upper_row):
-        if res["6"]["y"] < average_upper_row:
-            res["6"]["color"] = ""
-            res["6"]["y"] = ""
+    if not is_in_range(res["7"]["y"], biggest_y):
+        res["7"]["color"] = ""
+        res["7"]["y"] = ""
 
-    if not is_in_range(res["7"]["y"], average_upper_row):
-        if res["7"]["y"] < average_upper_row:
-            res["7"]["color"] = ""
-            res["7"]["y"] = ""
+    if not is_in_range(res["8"]["y"], biggest_y):
+        res["8"]["color"] = ""
+        res["8"]["y"] = ""
 
-    if not is_in_range(res["8"]["y"], average_upper_row):
-        if res["8"]["y"] < average_upper_row:
-            res["8"]["color"] = ""
-            res["8"]["y"] = ""
+
+def mapping_2d_to_3d_result(quadrant_one, quadrant_two, quadrant_three, quadrant_four, c_point_quadrant, c_point_color, c_point_y):
+    if c_point_quadrant == quadrant_enum["QUADRANT_ONE"]:
+        if quadrant_one["y"] < c_point_y:
+            quadrant_one["color"] = c_point_color
+            quadrant_one["y"] = c_point_y
+    elif c_point_quadrant == quadrant_enum["QUADRANT_TWO"]:
+        if quadrant_two["y"] < c_point_y:
+            quadrant_two["color"] = c_point_color
+            quadrant_two["y"] = c_point_y
+    elif c_point_quadrant == quadrant_enum["QUADRANT_THREE"]:
+        if quadrant_three["y"] < c_point_y:
+            quadrant_three["color"] = c_point_color
+            quadrant_three["y"] = c_point_y
+    elif c_point_quadrant == quadrant_enum["QUADRANT_FOUR"]:
+        if quadrant_four["y"] < c_point_y:
+            quadrant_four["color"] = c_point_color
+            quadrant_four["y"] = c_point_y
 
 
 def main():
@@ -540,7 +568,7 @@ def main():
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
 
     frame_count = 0
-    side_count = 0
+    side_count = sides_enum["SIDE_ONE"]
 
     cubes_cordinates =  []
 
@@ -569,14 +597,6 @@ def main():
 
             break
 
-        # hsv = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
-
-        # print(cv2.countNonZero(mask_complete))
-        # print(cv2.countNonZero(mask_red))
-        # print(cv2.countNonZero(mask_yellow))
-        # print(cv2.countNonZero(mask_blue))
-
-
         # ToDo: Dynamically calculate a frame the starting frame    
         if frame_count == 0:
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -599,100 +619,30 @@ def main():
             color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
 
             result_color = cv2.bitwise_and(frame, frame, mask=color_mask)
-
             result_contour = create_contour_mask(result_color)
-
             result = result_contour
 
             cordinates = calcualte_object_center_cordinates_with_edge_detection(result)
 
-            #print_out(f"Frame: {frame_count} - Side: {side_count + 1}")
+            # Foreach center point inside a  detected rectangle calculate the 2D quadrant, color and map it to a 3D grid
+            for c_point in cordinates:
 
-            
-            for c in cordinates:
-                # print("CUBE - ", "QUADRANT: ", calculate_quadrant(c[0], c[1]), "COLOR: ", calcualte_color_at_cordinate(frame, c[0], c[1]))
+                c_point_quadrant = calculate_quadrant(c_point["x"], c_point["y"])
+                c_point_color = calcualte_color_at_cordinate(frame, c_point["x"], c_point["y"])
 
-                quadrant = calculate_quadrant(c[0], c[1])
-                color = calcualte_color_at_cordinate(frame, c[0], c[1])
-                #print_out(f"Quadrant: {quadrant}, Color: {color}, Y:{c[1]}")
-
-
-                if side_count == 0:
-                    if quadrant == 1:
-                        if  result_cache["4"]["y"] < c[1]:
-                            result_cache["4"]["color"] = color
-                            result_cache["4"]["y"] = c[1]
-                    if quadrant == 2:
-                        if  result_cache["1"]["y"] < c[1]:
-                            result_cache["1"]["color"] = color
-                            result_cache["1"]["y"] = c[1]  
-                    if quadrant == 3:
-                        if  result_cache["8"]["y"] < c[1]:
-                            result_cache["8"]["color"] = color
-                            result_cache["8"]["y"] = c[1]
-                    if quadrant == 4:
-                        if  result_cache["5"]["y"] < c[1]:
-                            result_cache["5"]["color"] = color
-                            result_cache["5"]["y"] = c[1]
-
-                if side_count == 1:
-                    if quadrant == 1:
-                        if  result_cache["1"]["y"] < c[1]:
-                            result_cache["1"]["color"] = color
-                            result_cache["1"]["y"] = c[1]
-                    if quadrant == 2:
-                        if result_cache["2"]["y"] < c[1]:
-                            result_cache["2"]["color"] = color
-                            result_cache["2"]["y"] = c[1]  
-                    if quadrant == 3:
-                        if result_cache["5"]["y"] < c[1]:
-                            result_cache["5"]["color"] = color
-                            result_cache["5"]["y"] = c[1]
-                    if quadrant == 4:
-                        if result_cache["6"]["y"] < c[1]:
-                            result_cache["6"]["color"] = color
-                            result_cache["6"]["y"] = c[1]
-
-                if side_count == 2:
-                    if quadrant == 1:
-                        if result_cache["2"]["y"] < c[1]:
-                            result_cache["2"]["color"] = color
-                            result_cache["2"]["y"] = c[1]
-                    if quadrant == 2:
-                        if result_cache["3"]["y"] < c[1]:
-                            result_cache["3"]["color"] = color
-                            result_cache["3"]["y"] = c[1]  
-                    if quadrant == 3:
-                        if result_cache["6"]["y"] < c[1]:
-                            result_cache["6"]["color"] = color
-                            result_cache["6"]["y"] = c[1]
-                    if quadrant == 4:
-                        if result_cache["7"]["y"] < c[1]:
-                            result_cache["7"]["color"] = color
-                            result_cache["7"]["y"] = c[1]                        
-                               
-                if side_count == 3:
-                    if quadrant == 1:
-                        if result_cache["3"]["y"] < c[1]:
-                            result_cache["3"]["color"] = color
-                            result_cache["3"]["y"] = c[1]
-                    if quadrant == 2:
-                        if result_cache["4"]["y"] < c[1]:
-                            result_cache["4"]["color"] = color
-                            result_cache["4"]["y"] = c[1]  
-                    if quadrant == 3:
-                        if result_cache["7"]["y"] < c[1]:
-                            result_cache["7"]["color"] = color
-                            result_cache["7"]["y"] = c[1]
-                    if quadrant == 4:
-                        if result_cache["8"]["y"] < c[1]:
-                            result_cache["8"]["color"] = color
-                            result_cache["8"]["y"] = c[1]         
+                if side_count == sides_enum["SIDE_ONE"]:
+                    mapping_2d_to_3d_result(result_cache["4"], result_cache["1"], result_cache["8"], result_cache["5"], c_point_quadrant, c_point_color, c_point["y"])
+                elif side_count == sides_enum["SIDE_TWO"]:
+                    mapping_2d_to_3d_result(result_cache["1"], result_cache["2"], result_cache["5"], result_cache["6"], c_point_quadrant, c_point_color, c_point["y"])
+                elif side_count == sides_enum["SIDE_THREE"]:
+                    mapping_2d_to_3d_result(result_cache["2"], result_cache["3"], result_cache["6"], result_cache["7"], c_point_quadrant, c_point_color, c_point["y"])           
+                elif side_count == sides_enum["SIDE_FOUR"]:
+                    mapping_2d_to_3d_result(result_cache["3"], result_cache["4"], result_cache["7"], result_cache["8"], c_point_quadrant, c_point_color, c_point["y"])       
             
             # Go to next side, after the last frame was checked
             if (frame_count % ((rotation_time_in_frames) / ROTATION_SIDES)) - CHECKED_FRAMES_PER_SIDE == 0:
                 if side_count == ROTATION_SIDES - 1:
-                    side_count = 0
+                    side_count = sides_enum["SIDE_ONE"]
                 else:
                     side_count = side_count + 1
                 
