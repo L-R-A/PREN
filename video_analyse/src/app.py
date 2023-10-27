@@ -2,12 +2,13 @@ import cv2
 import numpy as np
 import os
 import json
+import time
 
 video_path = '../ressources/video_example/video_example.mp4'
 
 #region CONFIGURATION CONSTANTS
 
-IN_DEBUG_MODE = True
+IN_DEBUG_MODE = False
 FRAME_STEP_BY_STEP = False
 
 ROTATION_SIDES = 4
@@ -167,6 +168,18 @@ complete = {
 
 center_x = []
 
+class color:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
+
 #endregion
 
 #region HELPER METHODS
@@ -195,12 +208,15 @@ def image_show(name, frame):
     if IN_DEBUG_MODE:
         cv2.imshow(name, frame)
 
-def print_out(message, is_json = False):
+def log(message, is_json = False):
     if IN_DEBUG_MODE:
         if is_json:
             print(json.dumps((message), indent=2))
         else: 
             print(message)
+
+def print_step(message):
+        print(f"{color.BOLD}{message}{color.END}")
 
 def is_in_range(value1, value2, tolerance=10):
     return abs(value1 - value2) <= tolerance
@@ -228,7 +244,7 @@ def calculate_rectangle_simularity(rect1, rect2, tolerance=0.1):
 
 def calculate_rotation_time(color):
 
-    print_out("Calculate cycle time in frames...")
+    print_step("STEP 1: CALCULATE SINGLE ROTATION TIME IN FRAMES")
 
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
 
@@ -261,7 +277,7 @@ def calculate_rotation_time(color):
         # Calculate frame amount until simular starting patterns reoccur
         # Ignore the first few frames
         if (frame_count > 20 and calculate_rectangle_simularity(position_marker_first_frame, objects[0])):
-            print_out(f"Finished calculating cycle time: {frame_count} frames")
+            log(f"Finished calculating cycle time: {frame_count} frames")
             return frame_count
 
 
@@ -505,44 +521,7 @@ def calculate_quadrant(x, y):
 
 #endregion
 
-def remove_invalid_points(res):
-    smallest_y = min(res["1"]["y"], res["2"]["y"], res["3"]["y"], res["4"]["y"])
-
-    if not is_in_range(res["1"]["y"], smallest_y):
-        res["1"]["color"] = ""
-        res["1"]["y"] = ""
-
-    if not is_in_range(res["2"]["y"], smallest_y):
-        res["2"]["color"] = ""
-        res["2"]["y"] = ""
-
-    if not is_in_range(res["3"]["y"], smallest_y):
-        res["3"]["color"] = ""
-        res["3"]["y"] = ""
-
-    if not is_in_range(res["4"]["y"], smallest_y):
-        res["4"]["color"] = ""
-        res["4"]["y"] = ""
-            
-
-    biggest_y = max(res["5"]["y"], res["6"]["y"], res["7"]["y"], res["8"]["y"])
-
-    if not is_in_range(res["5"]["y"], biggest_y):
-        res["5"]["color"] = ""
-        res["5"]["y"] = ""
-
-    if not is_in_range(res["6"]["y"], biggest_y):
-        res["6"]["color"] = ""
-        res["6"]["y"] = ""
-
-    if not is_in_range(res["7"]["y"], biggest_y):
-        res["7"]["color"] = ""
-        res["7"]["y"] = ""
-
-    if not is_in_range(res["8"]["y"], biggest_y):
-        res["8"]["color"] = ""
-        res["8"]["y"] = ""
-
+#region GENERATE_RESULT
 
 def mapping_2d_to_3d_result(quadrant_one, quadrant_two, quadrant_three, quadrant_four, c_point_quadrant, c_point_color, c_point_y):
     if c_point_quadrant == quadrant_enum["QUADRANT_ONE"]:
@@ -562,8 +541,41 @@ def mapping_2d_to_3d_result(quadrant_one, quadrant_two, quadrant_three, quadrant
             quadrant_four["color"] = c_point_color
             quadrant_four["y"] = c_point_y
 
+def check_if_cube_is_a_runaway(cube, y):
+    if not is_in_range(cube["y"], y):
+        cube["color"] = ""
+        cube["y"] = ""
+
+
+def analyze_generated_result_and_remove_invalid_cubes(cubes):
+    smallest_y = min(cubes["1"]["y"], cubes["2"]["y"], cubes["3"]["y"], cubes["4"]["y"])
+    check_if_cube_is_a_runaway(cubes["1"], smallest_y)
+    check_if_cube_is_a_runaway(cubes["2"], smallest_y)
+    check_if_cube_is_a_runaway(cubes["3"], smallest_y)   
+    check_if_cube_is_a_runaway(cubes["4"], smallest_y)
+
+    biggest_y = max(cubes["5"]["y"], cubes["6"]["y"], cubes["7"]["y"], cubes["8"]["y"])
+    check_if_cube_is_a_runaway(cubes["5"], biggest_y)
+    check_if_cube_is_a_runaway(cubes["6"], biggest_y)
+    check_if_cube_is_a_runaway(cubes["7"], biggest_y)
+    check_if_cube_is_a_runaway(cubes["8"], biggest_y)
+
+def write_output(cubes):
+    try:
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILE_DIR)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        with open(os.path.join(log_dir, OUTPUT_FILE_NAME), "w") as file:
+            file.write(json.dumps(cubes) + '\n')
+    except Exception as e:
+        log("Writing to log file didn't work!")
+        log(e)
+
+#endregion
 
 def main():
+
     rotation_time_in_frames = calculate_rotation_time(light_grey_color)
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
 
@@ -572,8 +584,10 @@ def main():
 
     cubes_cordinates =  []
 
+    print_step("STEP 2: CALCULATE 2D CORDINATES OF CUBES USING COLOR, CONTOUR AND EDGE-DETECTION")
 
     while True:
+
 
         exit_analyse = False
 
@@ -582,19 +596,10 @@ def main():
 
         # Exit if plate has cycled ones (going back to start position isn't necessary)
         if frame_count >= rotation_time_in_frames:
-            remove_invalid_points(result_cache)
-            print_out(result_cache, True)
-            try:
-                log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILE_DIR)
-                if not os.path.exists(log_dir):
-                    os.makedirs(log_dir)
-
-                with open(os.path.join(log_dir, OUTPUT_FILE_NAME), "a") as file:
-                    file.write(json.dumps(result_cache) + '\n')
-            except Exception as e:
-                print_out("Writing to log file didn't work!")
-                print_out(e)
-
+            print_step("STEP 3: GENERATE OUTPUT")
+            analyze_generated_result_and_remove_invalid_cubes(result_cache)
+            log(result_cache, True)
+            write_output(result_cache)
             break
 
         # ToDo: Dynamically calculate a frame the starting frame    
@@ -646,22 +651,24 @@ def main():
                 else:
                     side_count = side_count + 1
                 
-        image_show('Original', frame)
-        image_show('Result', result)    
-
         # Run frame after frame for debugging purposes
-        if FRAME_STEP_BY_STEP and IN_DEBUG_MODE:
-            while True:
-                # Press enter to run next frame
-                if cv2.waitKey(1) == 13:
-                    break
+        if IN_DEBUG_MODE:
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    exit_analyse = True
-                    break
+            image_show('Original', frame)
+            image_show('Result', result)   
 
-        if exit_analyse or (cv2.waitKey(1) & 0xFF == ord('q')):
-            break
+            if FRAME_STEP_BY_STEP:
+                while True:
+                    # Press enter to run next frame
+                    if cv2.waitKey(1) == 13:
+                        break
+
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        exit_analyse = True
+                        break
+
+            if exit_analyse or (cv2.waitKey(1) & 0xFF == ord('q')):
+                break
 
         frame_count = frame_count + 1
 
