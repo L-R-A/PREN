@@ -2,11 +2,11 @@ import cv2
 import numpy as np
 import os
 import json
-import time
 
-video_path = '../ressources/video_example/video_example.mp4'
 
 #region CONFIGURATION CONSTANTS
+
+VIDEO_PATH = '../ressources/video_example/video_example.mp4'
 
 IN_DEBUG_MODE = False
 FRAME_STEP_BY_STEP = False
@@ -246,7 +246,7 @@ def calculate_rotation_time(color):
 
     print_step("STEP 1: CALCULATE SINGLE ROTATION TIME IN FRAMES")
 
-    cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
+    cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
 
     frame_count = 0
     
@@ -577,7 +577,7 @@ def write_output(cubes):
 def main():
 
     rotation_time_in_frames = calculate_rotation_time(light_grey_color)
-    cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
+    cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
 
     frame_count = 0
     side_count = sides_enum["SIDE_ONE"]
