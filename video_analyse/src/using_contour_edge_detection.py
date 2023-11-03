@@ -302,7 +302,8 @@ def create_contour_mask(frame):
 
     # Image preprocessing
     grey = vp.Video.grey_mask(frame)
-    blur = vp.Video.blur_mask(grey)
+    stretched = vp.Video.contrast_stretching(grey)
+    blur = vp.Video.blur_mask(stretched)
     processed = vp.Video.threshold_mask(blur)
 
     contour_thickness = 20
@@ -329,6 +330,9 @@ def create_contour_mask(frame):
     out = np.zeros_like(grey)
     out[mask == 255] = grey[mask == 255]
 
+
+
+
     # Image preprocessing
     blur = vp.Video.blur_mask(out)
     processed = vp.Video.threshold_mask(blur)
@@ -338,7 +342,6 @@ def create_contour_mask(frame):
 
     c = 0
     for i in contours:
-            area = cv2.contourArea(i)
             cv2.drawContours(frame, contours, c, (0, 0, 0), contour_thickness)
             c+=1
 
