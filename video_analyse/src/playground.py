@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 import json
-import video_preprocessing as vp
+import helper as hp
 
 
 #region CONFIGURATION CONSTANTS
@@ -22,47 +22,6 @@ OUTPUT_FILE_DIR = "../tmp"
 
 #endregion
 
-red_color = [
-    {
-        "color_name": "red",
-        "lower_bounds": np.array([0, 100, 20]),
-        "upper_bounds": np.array([10, 255, 255])
-    },
-    {
-        "color_name": "red",
-        "lower_bounds": np.array([160, 100, 20]),
-        "upper_bounds": np.array([180, 255, 255]) 
-    }
-]
-
-yellow_color = [
-    {
-        "color_name": "yellow",
-        "lower_bounds": np.array([20, 100, 100]),
-        "upper_bounds": np.array([40, 255, 255]) 
-    }
-]
-
-blue_color = [
-    {
-        "color_name": "blue",
-        "lower_bounds": np.array([90, 50, 70]),
-        "upper_bounds": np.array([128, 255, 255]) 
-    }
-]
-
-light_grey_color = [
-    {
-        "color_name": "light grey",
-        "lower_bounds": np.array([0, 0, 180]),
-        "upper_bounds": np.array([180, 40, 255])
-    }
-]
-
-def image_show(name, frame):
-    if IN_DEBUG_MODE:
-        cv2.imshow(name, frame)
-
 def create_color_mask(hsv, colors):
 
     mask = []
@@ -76,8 +35,6 @@ def create_color_mask(hsv, colors):
     return mask
 
 #region CORDINATE CALCULATION
-
-
 
 def calculate_object_cordinates_with_blob_detection(gray_image, image):
     params = cv2.SimpleBlobDetector.Params()
@@ -113,14 +70,13 @@ def calculate_object_cordinates_with_blob_detection(gray_image, image):
 
 #endregion
 
-
 #region IMAGE_PROECESSING
 
 def erode_image_processing(non_erode_mask, result):
-    eroded_mask = vp.Video.eroded_mask(non_erode_mask)
-    eroded_mask2 = vp.Video.eroded_mask(non_erode_mask, (10,10))        
-    eroded_mask3 = vp.Video.eroded_mask(non_erode_mask, (20,20))
-    eroded_mask4 = vp.Video.eroded_mask(non_erode_mask, (50,50))
+    eroded_mask = hp.Video.eroded_mask(non_erode_mask)
+    eroded_mask2 = hp.Video.eroded_mask(non_erode_mask, (10,10))        
+    eroded_mask3 = hp.Video.eroded_mask(non_erode_mask, (20,20))
+    eroded_mask4 = hp.Video.eroded_mask(non_erode_mask, (50,50))
 
 
     test = cv2.bitwise_and(result, result, mask=non_erode_mask)
@@ -129,39 +85,37 @@ def erode_image_processing(non_erode_mask, result):
     test4 = cv2.bitwise_and(result, result, mask=eroded_mask3)
     test5 = cv2.bitwise_and(result, result, mask=eroded_mask4)
 
-    image_show('no erode', test)
-    image_show('erode (5,5)', test2)
-    image_show('erode (10,10)', test3)
-    image_show('erode (20,20)', test4)
-    image_show('erode (50,50)', test5)
+    hp.Out.image_show('no erode', test, IN_DEBUG_MODE)
+    hp.Out.image_show('erode (5,5)', test2, IN_DEBUG_MODE)
+    hp.Out.image_show('erode (10,10)', test3, IN_DEBUG_MODE)
+    hp.Out.image_show('erode (20,20)', test4, IN_DEBUG_MODE)
+    hp.Out.image_show('erode (50,50)', test5, IN_DEBUG_MODE)
 
 def gamma_correction(gray, result):
-    gamma = vp.Video.gamma_correction(gray, 1.5)
+    gamma = hp.Video.gamma_correction(gray, 1.5)
 
     test = cv2.bitwise_and(result, result, mask=gamma)
 
-    image_show('no gamma', result)
-    image_show('gamma', test)
+    hp.Out.image_show('no gamma', result, IN_DEBUG_MODE)
+    hp.Out.image_show('gamma', test, IN_DEBUG_MODE)
 
 
 def contrast_stretching(gray, result):
-    stretched = vp.Video.contrast_stretching(gray)
+    stretched = hp.Video.contrast_stretching(gray)
 
     test = cv2.bitwise_and(result, result, mask=stretched)
 
-    image_show('no stretching', result)
-    image_show('stretching', test)
+    hp.Out.image_show('no stretching', result, IN_DEBUG_MODE)
+    hp.Out.image_show('stretching', test, IN_DEBUG_MODE)
 
 
 def contour_enhancement(gray, result):
-    # clahe = vp.Video.clahe_correction(gray)
-    stretched = vp.Video.contrast_stretching(gray)
-    # gamma = vp.Video.gamma_correction(stretched)
-    blur = vp.Video.blur_mask(stretched)
-    threshed = vp.Video.threshold_mask(blur)
-    # eroded_mask = vp.Video.eroded_mask(threshed)
-
-    cv2.imshow("Contour enhancement ", threshed)
+    # clahe = hp.Video.clahe_correction(gray)
+    stretched = hp.Video.contrast_stretching(gray)
+    # gamma = hp.Video.gamma_correction(stretched)
+    blur = hp.Video.blur_mask(stretched)
+    threshed = hp.Video.threshold_mask(blur)
+    # eroded_mask = hp.Video.eroded_mask(threshed)
 
 
     min_contour_area = 1000  # Adjust this value as needed
@@ -182,7 +136,7 @@ def contour_enhancement(gray, result):
     cv2.drawContours(mask,[best_cnt],0,255,-1)
     cv2.drawContours(mask,[best_cnt],0,0,2)
 
-    cv2.imshow("Zwischenresultat", result)
+    hp.Out.image_show("Zwischenresultat", result, IN_DEBUG_MODE)
 
     print(mask == 0)
 
@@ -191,14 +145,14 @@ def contour_enhancement(gray, result):
     out = np.zeros_like(gray)
     out[mask == 255] = gray[mask == 255]
 
-    cv2.imshow("Out image", out)
+    hp.Out.image_show("Out image", out, IN_DEBUG_MODE)
 
     # Image preprocessing
-    blur = vp.Video.blur_mask(out)
-    processed = vp.Video.threshold_mask(blur)
-    eroded = vp.Video.eroded_mask(processed, (10,10))
+    blur = hp.Video.blur_mask(out)
+    processed = hp.Video.threshold_mask(blur)
+    eroded = hp.Video.eroded_mask(processed, (10,10))
 
-    cv2.imshow("Enhanced image", eroded)
+    hp.Out.image_show("Enhanced image", eroded, IN_DEBUG_MODE)
 
     contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -213,7 +167,7 @@ def contour_enhancement(gray, result):
     # cv2.drawContours(result, contours, -1, (0, 0, 0), -1)  # -1 means fill the contours
 
     # Display the result (you can also save it if needed)
-    cv2.imshow("Result", result)
+    hp.Out.image_show("Result", result, IN_DEBUG_MODE)
 
     # test = cv2.bitwise_or(result, result, mask=threshed)
     
@@ -224,16 +178,12 @@ def contour_enhancement(gray, result):
 
 #endregion
 
-
-
-
 def main():
-    video = vp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
-
+    video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
 
     while True: 
-        ret, frame = vp.Video.get_next_frame(video)
+        ret, frame = hp.Video.get_next_frame(video)
 
         if not ret:
             break
@@ -247,12 +197,10 @@ def main():
         # print(upperLimit)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-        color_mask = vp.Video.create_color_mask(hsv, vp.HSVRanges.red_color + vp.HSVRanges.blue_color + vp.HSVRanges.yellow_color)
+        color_mask = hp.Video.create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.blue_color + hp.HSVRanges.yellow_color)
         result = cv2.bitwise_and(frame, frame, mask=color_mask)
 
-        gray_mask = vp.Video.grey_mask(result)
-
+        gray_mask = hp.Video.grey_mask(result)
 
         contour_enhancement(gray_mask, result)
 
@@ -263,10 +211,10 @@ def main():
 
         # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         # enhanced = clahe.apply(gray_mask)
-        # enhanced = vp.Video.contrast_improvement_mask(gray_mask)
+        # enhanced = hp.Video.contrast_improvement_mask(gray_mask)
 
-        # blur_mask = vp.Video.blur_mask(enhanced)
-        # no_gamma = vp.Video.threshold_mask(blur_mask)
+        # blur_mask = hp.Video.blur_mask(enhanced)
+        # no_gamma = hp.Video.threshold_mask(blur_mask)
 
 
         # erode_image_processing(thresh_mask, result)

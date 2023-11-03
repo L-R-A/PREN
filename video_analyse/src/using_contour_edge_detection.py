@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 import json
-import video_preprocessing as vp
+import helper as hp
 
 #region CONFIGURATION CONSTANTS
 
@@ -30,43 +30,6 @@ OUTPUT_FILE_DIR = "../tmp"
 #endregion
 
 #region PRESTRUCTURED LISTS / DICTIONARIES
-
-red_color = [
-    {
-        "color_name": "red",
-        "lower_bounds": np.array([0, 100, 20]),
-        "upper_bounds": np.array([10, 255, 255])
-    },
-    {
-        "color_name": "red",
-        "lower_bounds": np.array([160, 100, 20]),
-        "upper_bounds": np.array([180, 255, 255]) 
-    }
-]
-
-yellow_color = [
-    {
-        "color_name": "yellow",
-        "lower_bounds": np.array([20, 100, 100]),
-        "upper_bounds": np.array([40, 255, 255]) 
-    }
-]
-
-blue_color = [
-    {
-        "color_name": "blue",
-        "lower_bounds": np.array([90, 100, 100]),
-        "upper_bounds": np.array([130, 255, 255]) 
-    }
-]
-
-light_grey_color = [
-    {
-        "color_name": "light grey",
-        "lower_bounds": np.array([0, 0, 180]),
-        "upper_bounds": np.array([180, 40, 255])
-    }
-]
 
 result = {
     "time": "",
@@ -168,18 +131,6 @@ complete = {
 
 center_x = []
 
-class color:
-   PURPLE = '\033[95m'
-   CYAN = '\033[96m'
-   DARKCYAN = '\033[36m'
-   BLUE = '\033[94m'
-   GREEN = '\033[92m'
-   YELLOW = '\033[93m'
-   RED = '\033[91m'
-   BOLD = '\033[1m'
-   UNDERLINE = '\033[4m'
-   END = '\033[0m'
-
 #endregion
 
 #region HELPER METHODS
@@ -189,7 +140,7 @@ def calcualte_color_at_cordinate(frame, x, y):
 
     hsv_color = cv2.cvtColor(np.uint8([[pixel]]), cv2.COLOR_BGR2HSV)[0][0]
 
-    merged_colors = red_color + yellow_color + blue_color
+    merged_colors = hp.HSVRanges.red_color + hp.HSVRanges.yellow_color  + hp.HSVRanges.blue_color
 
     for color in merged_colors:
         if (color["lower_bounds"][0] <= hsv_color[0] <= color["upper_bounds"][0] and
@@ -203,20 +154,6 @@ def is_approx_modular(value1, value2, tolerance=10):
         return True
 
     return 0 <= value1 % value2 <= tolerance
-
-def image_show(name, frame):
-    if IN_DEBUG_MODE:
-        cv2.imshow(name, frame)
-
-def log(message, is_json = False):
-    if IN_DEBUG_MODE:
-        if is_json:
-            print(json.dumps((message), indent=2))
-        else: 
-            print(message)
-
-def print_step(message):
-        print(f"{color.BOLD}{message}{color.END}")
 
 def is_in_range(value1, value2, tolerance=10):
     return abs(value1 - value2) <= tolerance
@@ -244,7 +181,7 @@ def calculate_rectangle_simularity(rect1, rect2, tolerance=0.1):
 
 def calculate_rotation_time(color):
 
-    print_step("STEP 1: CALCULATE SINGLE ROTATION TIME IN FRAMES")
+    hp.Out.print_step("STEP 1: CALCULATE SINGLE ROTATION TIME IN FRAMES")
 
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
 
@@ -277,7 +214,7 @@ def calculate_rotation_time(color):
         # Calculate frame amount until simular starting patterns reoccur
         # Ignore the first few frames
         if (frame_count > 20 and calculate_rectangle_simularity(position_marker_first_frame, objects[0])):
-            log(f"Finished calculating cycle time: {frame_count} frames")
+            hp.Out.log(f"Finished calculating cycle time: {frame_count} frames", IN_DEBUG_MODE)
             return frame_count
 
 
@@ -301,10 +238,10 @@ def create_color_mask(hsv, colors):
 def create_contour_mask(frame):
 
     # Image preprocessing
-    grey = vp.Video.grey_mask(frame)
-    stretched = vp.Video.contrast_stretching(grey)
-    blur = vp.Video.blur_mask(stretched)
-    processed = vp.Video.threshold_mask(blur)
+    grey = hp.Video.grey_mask(frame)
+    stretched = hp.Video.contrast_stretching(grey)
+    blur = hp.Video.blur_mask(stretched)
+    processed = hp.Video.threshold_mask(blur)
 
     contour_thickness = 20
 
@@ -334,9 +271,9 @@ def create_contour_mask(frame):
 
 
     # Image preprocessing
-    blur = vp.Video.blur_mask(out)
-    processed = vp.Video.threshold_mask(blur)
-    eroded = vp.Video.eroded_mask(processed, (10,10))
+    blur = hp.Video.blur_mask(out)
+    processed = hp.Video.threshold_mask(blur)
+    eroded = hp.Video.eroded_mask(processed, (10,10))
 
     contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -544,14 +481,14 @@ def write_output(cubes):
         with open(os.path.join(log_dir, OUTPUT_FILE_NAME), "w") as file:
             file.write(json.dumps(cubes) + '\n')
     except Exception as e:
-        log("Writing to log file didn't work!")
-        log(e)
+        hp.Out.log("Writing to log file didn't work!", IN_DEBUG_MODE)
+        hp.Out.log(e, IN_DEBUG_MODE)
 
 #endregion
 
 def main():
 
-    rotation_time_in_frames = calculate_rotation_time(light_grey_color)
+    rotation_time_in_frames = calculate_rotation_time(hp.HSVRanges.light_grey_color)
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
 
     frame_count = 0
@@ -559,7 +496,7 @@ def main():
 
     cubes_cordinates =  []
 
-    print_step("STEP 2: CALCULATE 2D CORDINATES OF CUBES USING COLOR, CONTOUR AND EDGE-DETECTION")
+    hp.Out.print_step("STEP 2: CALCULATE 2D CORDINATES OF CUBES USING COLOR, CONTOUR AND EDGE-DETECTION")
 
     while True:
 
@@ -571,16 +508,16 @@ def main():
 
         # Exit if plate has cycled ones (going back to start position isn't necessary)
         if frame_count >= rotation_time_in_frames:
-            print_step("STEP 3: GENERATE OUTPUT")
+            hp.Out.print_step("STEP 3: GENERATE OUTPUT")
             analyze_generated_result_and_remove_invalid_cubes(result_cache)
-            log(result_cache, True)
+            hp.Out.log(result_cache, IN_DEBUG_MODE, True)
             write_output(result_cache)
             break
 
         # ToDo: Dynamically calculate a frame the starting frame    
         if frame_count == 0:
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
+            color_mask = create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.yellow_color + hp.HSVRanges.blue_color)
             cubes_cordinates = calculate_object_cordinates_with_contour(color_mask)
 
             complete["x"] = cubes_cordinates[0][0]
@@ -596,7 +533,7 @@ def main():
 
             # frame = frame[ cubes_cordinates[0][1]:cubes_cordinates[0][1] + cubes_cordinates[0][3], cubes_cordinates[0][0]:cubes_cordinates[0][0] + cubes_cordinates[0][2]]
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
+            color_mask = create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.yellow_color + hp.HSVRanges.blue_color)
             result_color = cv2.bitwise_and(frame, frame, mask=color_mask)
             
 
@@ -630,8 +567,8 @@ def main():
         # Run frame after frame for debugging purposes
         if IN_DEBUG_MODE:
 
-            image_show('Original', frame)
-            image_show('Result', result)   
+            hp.Out.image_show('Original', frame, IN_DEBUG_MODE)
+            hp.Out.image_show('Result', result, IN_DEBUG_MODE)   
 
             if FRAME_STEP_BY_STEP:
                 while True:
