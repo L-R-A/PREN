@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import os
 import json
-
+import video_preprocessing as vp
 
 #region CONFIGURATION CONSTANTS
 
 VIDEO_PATH = '../ressources/video_example/video_example.mp4'
 
-IN_DEBUG_MODE = False
-FRAME_STEP_BY_STEP = False
+IN_DEBUG_MODE = True
+FRAME_STEP_BY_STEP = True
 
 ROTATION_SIDES = 4
 
@@ -299,15 +299,15 @@ def create_color_mask(hsv, colors):
 
 
 def create_contour_mask(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
 
-    image_show("thresh", thresh)
+    # Image preprocessing
+    grey = vp.Video.grey_mask(frame)
+    blur = vp.Video.blur_mask(grey)
+    processed = vp.Video.threshold_mask(blur)
 
     contour_thickness = 20
 
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(processed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     max_area = 0
     c = 0
@@ -322,21 +322,17 @@ def create_contour_mask(frame):
 
 
 
-    mask = np.zeros((gray.shape),np.uint8)
+    mask = np.zeros((grey.shape),np.uint8)
     cv2.drawContours(mask,[best_cnt],0,255,-1)
     cv2.drawContours(mask,[best_cnt],0,0,2)
 
-    out = np.zeros_like(gray)
-    out[mask == 255] = gray[mask == 255]
+    out = np.zeros_like(grey)
+    out[mask == 255] = grey[mask == 255]
 
-    blur = cv2.GaussianBlur(out, (5,5), 0)
-    # thresh = cv2.adaptiveThreshold(blur,255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-
-    # Apply morphological operations to connect nearby contours
-    kernel = np.ones((10, 10), np.uint8)
-    dilated = cv2.dilate(thresh, kernel, iterations=1)
-    eroded = cv2.erode(dilated, kernel, iterations=1)
+    # Image preprocessing
+    blur = vp.Video.blur_mask(out)
+    processed = vp.Video.threshold_mask(blur)
+    eroded = vp.Video.eroded_mask(processed, (10,10))
 
     contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -443,30 +439,6 @@ def calcualte_object_center_cordinates_with_edge_detection(frame):
 
     return objects
 
-
-def calculate_object_cordinates_with_blob_detection(mask, frame):
-    kernel = np.ones((5, 5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-    # Use blob detection on the mask to identify objects
-    detector = cv2.SimpleBlobDetector_create()
-    keypoints = detector.detect(mask)
-
-    object_coordinates = []
-
-    # Loop through the detected keypoints (blobs)
-    for keypoint in keypoints:
-        x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
-        w = int(keypoint.size)
-        h =int(keypoint.size)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        object_coordinates.append((x, y, w, h))
-
-
-
-    return object_coordinates
 
 #endregion
 
@@ -622,8 +594,9 @@ def main():
             # frame = frame[ cubes_cordinates[0][1]:cubes_cordinates[0][1] + cubes_cordinates[0][3], cubes_cordinates[0][0]:cubes_cordinates[0][0] + cubes_cordinates[0][2]]
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             color_mask = create_color_mask(hsv, red_color + yellow_color + blue_color)
-
             result_color = cv2.bitwise_and(frame, frame, mask=color_mask)
+            
+
             result_contour = create_contour_mask(result_color)
             result = result_contour
 
