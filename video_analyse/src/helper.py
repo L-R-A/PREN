@@ -50,17 +50,6 @@ class Video:
 
     def get_next_frame(self):
         return self.videoCapture.read()
-
-    def create_color_mask(hsv, colors):
-        mask = []
-
-        for color in colors:
-            if len(mask) == 0:
-                mask = cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"])
-            else:
-                mask = cv2.bitwise_or(mask, cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"]))
-
-        return mask
     
     def grey_mask(frame):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -114,7 +103,19 @@ class Terminal_Color:
    RED = '\033[91m'
    BOLD = '\033[1m'
    UNDERLINE = '\033[4m'
-   END = '\033[0m'    
+   END = '\033[0m'
+
+class Mask: 
+    def create_color_mask(hsv, colors):
+        mask = []
+
+        for color in colors:
+            if len(mask) == 0:
+                mask = cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"])
+            else:
+                mask = cv2.bitwise_or(mask, cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"]))
+
+        return mask
     
 class Out:
     def image_show(name, frame, debug):
@@ -132,3 +133,8 @@ class Out:
             print(f"{Terminal_Color.BOLD}{message}{Terminal_Color.END}")
 
 
+class Constants:
+    CAMERA_CALIBRATION = {
+        "BASELINE": 0.01,  # Distance between the optical centers of the left and right cameras in meters
+        "FOCAL_LENGTH": 0.008  # Distance from the camera's image sensor to the lens in meters
+    }
