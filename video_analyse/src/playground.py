@@ -22,18 +22,6 @@ OUTPUT_FILE_DIR = "../tmp"
 
 #endregion
 
-def create_color_mask(hsv, colors):
-
-    mask = []
-
-    for color in colors:
-        if len(mask) == 0:
-            mask = cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"])
-        else:
-            mask = cv2.bitwise_or(mask, cv2.inRange(hsv, color["lower_bounds"], color["upper_bounds"]))
-
-    return mask
-
 #region CORDINATE CALCULATION
 
 def calculate_object_cordinates_with_blob_detection(gray_image, image):
@@ -178,6 +166,41 @@ def contour_enhancement(gray, result):
 
 #endregion
 
+
+def cube_detection(frame):
+    # Preprocess the image (e.g., convert to grayscale, apply thresholding)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+
+    # Find contours of the cubes
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Calculate the position of each cube
+    cube_positions = []
+    grid_size = (2, 2, 2)  # Rows, columns, height
+    for contour in contours:
+        if cv2.contourArea(contour) > 1:
+            # Calculate the centroid of the cube
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+
+
+                # Use the centroid to calculate the position in the grid
+                cube_x = int(cx / (frame.shape[1] / grid_size[1]))
+                cube_y = int(cy / (frame.shape[0] / grid_size[0]))
+                cube_z = 0  # Assuming all cubes are at the same height
+                
+                cube_positions.append((cube_x, cube_y, cube_z))
+
+    # Display the image with cube positions marked
+    for x, y, z in cube_positions:
+        cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
+
+    hp.Out.image_show("RESULT", frame, IN_DEBUG_MODE)
+
+
 def main():
     video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
@@ -197,15 +220,16 @@ def main():
         # print(upperLimit)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        color_mask = hp.Video.create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.blue_color + hp.HSVRanges.yellow_color)
-        result = cv2.bitwise_and(frame, frame, mask=color_mask)
+        color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.blue_color + hp.HSVRanges.yellow_color)
+        frame = cv2.bitwise_and(frame, frame, mask=color_mask)
 
-        gray_mask = hp.Video.grey_mask(result)
+        # gray_mask = hp.Video.grey_mask(result)
 
-        contour_enhancement(gray_mask, result)
+        # contour_enhancement(gray_mask, result)
 
         # contrast_stretching(gray_mask, result)
-        # gamma_correction(gray_mask, result)        
+        # gamma_correction(gray_mask, result)       
+         
 
 
 
@@ -223,6 +247,8 @@ def main():
 
 
         # calculate_object_cordinates_with_blob_detection(test, result)
+
+        # cube_detection(frame)
 
         if IN_DEBUG_MODE:
 
