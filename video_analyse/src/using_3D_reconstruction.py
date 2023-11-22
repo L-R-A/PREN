@@ -176,8 +176,6 @@ def scene_reconstruction(depth_map):
 
 #endregion
 
-
-
 def main():
 
     # Camera calibration has to be only once for each camera model used

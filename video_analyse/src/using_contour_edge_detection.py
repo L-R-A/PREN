@@ -13,6 +13,8 @@ FRAME_STEP_BY_STEP = True
 
 ROTATION_SIDES = 4
 
+FRAME_SCALE_PERCENTAGE = 80
+
 CHECKED_FRAMES_PER_SIDE = 10
 
 MIN_CONTOUR_AREA = 1000
@@ -490,7 +492,7 @@ def main():
 
     rotation_time_in_frames = calculate_rotation_time(hp.HSVRanges.light_grey_color)
     cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
-
+    
     frame_count = 0
     side_count = sides_enum["SIDE_ONE"]
 
@@ -499,11 +501,11 @@ def main():
     hp.Out.print_step("STEP 2: CALCULATE 2D CORDINATES OF CUBES USING COLOR, CONTOUR AND EDGE-DETECTION")
 
     while True:
-
-
         exit_analyse = False
 
         ret, frame = cap.read()
+        frame = hp.Video.scale_down_frame(frame, FRAME_SCALE_PERCENTAGE);
+
         result = frame
 
         # Exit if plate has cycled ones (going back to start position isn't necessary)

@@ -92,6 +92,11 @@ class Video:
 
         x, y, w, h = roi
         return undistorted[y:y+h, x:x+w]
+    
+    def scale_down_frame(frame, percentage):
+        width = int((frame.shape[1] * percentage) / 100)
+        height = int((frame.shape[0] * percentage) / 100)
+        return cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
 
 class Terminal_Color:
    PURPLE = '\033[95m'
