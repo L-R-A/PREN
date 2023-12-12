@@ -7,7 +7,7 @@ import helper as hp
 
 #region CONFIGURATION CONSTANTS
 
-VIDEO_PATH = '../ressources/video_example/video_example.mp4'
+VIDEO_PATH = '../ressources/video_example/01_config.mp4'
 
 IN_DEBUG_MODE = True
 FRAME_STEP_BY_STEP = True
@@ -223,7 +223,16 @@ def main():
         color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.blue_color + hp.HSVRanges.yellow_color)
         frame = cv2.bitwise_and(frame, frame, mask=color_mask)
 
-        # gray_mask = hp.Video.grey_mask(result)
+
+        gray_mask = hp.Video.grey_mask(frame)
+        blur = hp.Video.blur_mask(gray_mask)
+        threshed = hp.Video.threshold_mask(blur)
+        eroded_mask = hp.Video.eroded_mask(threshed)
+
+
+
+        hp.Out.image_show("frame", eroded_mask, IN_DEBUG_MODE)
+
 
         # contour_enhancement(gray_mask, result)
 

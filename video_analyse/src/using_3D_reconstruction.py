@@ -13,7 +13,7 @@ import helper as hp
 
 IN_DEBUG_MODE = True
 FRAME_STEP_BY_STEP = True
-VIDEO_PATH = '../ressources/video_example/video_example.mp4'
+VIDEO_PATH = '../ressources/video_example/01_config.mp4'
 CALLIBRATION_VIDEO_PATH = '../ressources/video_example/callibration_video.mp4'
 
 OUTPUT_FILE_DIR = "../tmp"

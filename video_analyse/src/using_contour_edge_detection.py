@@ -6,7 +6,7 @@ import helper as hp
 
 #region CONFIGURATION CONSTANTS
 
-VIDEO_PATH = '../ressources/video_example/video_example.mp4'
+VIDEO_PATH = '../ressources/video_example/01_config.mp4'
 
 IN_DEBUG_MODE = True
 FRAME_STEP_BY_STEP = True
@@ -284,6 +284,8 @@ def create_contour_mask(frame):
             cv2.drawContours(frame, contours, c, (0, 0, 0), contour_thickness)
             c+=1
 
+    hp.Out.image_show("Contour", frame, IN_DEBUG_MODE)
+
     return frame
 
 #endregion
@@ -504,7 +506,7 @@ def main():
         exit_analyse = False
 
         ret, frame = cap.read()
-        frame = hp.Video.scale_down_frame(frame, FRAME_SCALE_PERCENTAGE);
+        # frame = hp.Video.scale_down_frame(frame, FRAME_SCALE_PERCENTAGE);
 
         result = frame
 

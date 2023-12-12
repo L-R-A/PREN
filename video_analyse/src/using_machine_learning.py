@@ -5,16 +5,18 @@ import numpy as np
 # import tensorflow as tf
 import keras.api._v2.keras as keras
 import random
+import cv2
+import helper as hp
 
 
 
 RESSOURCES_PATH = "../tmp/train/ressources/"
 MODEL_PATH = "../tmp/models"
-TRAIN_DATA_FOLDER = "047a698a-3b28-482b-b761-7778e2375849"
+TRAIN_DATA_FOLDER = "f2cffe42-a088-479b-9eef-c5b0b8621322"
 IMAGE_FOLDER = "Images"
 LABELS_FOLDER = "Labels"
 STRATEGY = 2
-IN_DEBUG_MODE = True
+IN_DEBUG_MODE = False
 JSON_NAME = "scene_results.json"
 
 TRAIN_MODEL = False
@@ -64,23 +66,42 @@ def get_data(stage):
             except:
                 image_not_found = True
                 continue
-            
+
 
             # Scale down image (resize)
             i = i.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+
+            # Channel order of Pillow is different than OpenCV
+            i = np.array(i)[:, :, ::-1]
+
+            if IN_DEBUG_MODE:
+                hp.Out.image_show("hasd", np.array(i), True)
+
+                while True:
+                    if cv2.waitKey(1) & 0xFF == ord('q'): 
+                        break
+
+
             if STRATEGY == 2:
                 img.append(i)
             else:
                 img = i
-                    
+
         if image_not_found == False:
             images.append(img)
-            labels.append(result["positions"])
+            try:
+                # np.array(images) # is only necessary to check if the data is homogenous
+                labels.append(result["positions"])
+            except:
+                print(f"Images shape got inhomogenous at: ${result['imagePaths']}")
+                images.pop()
+
+            
 
     if IN_DEBUG_MODE:
         print("\n\n")
 
-    return [images, labels]
+    return [np.array(images), np.array(labels)]
 
 def map_labels_to_nummeric(label):
     mapped_label = []
@@ -166,15 +187,11 @@ def create_model():
 
     model.compile(optimizer=optimizer, loss=LOSS_FUNCTION, metrics=['accuracy'])
 
-    if IN_DEBUG_MODE:
-        model.summary()
-
     return model
 
 
 def test_model(model, test_data):
     test_images = normalize_images(np.array((test_data[0])))
-
 
     if STRATEGY == 1:
         return model.predict(test_images)
@@ -184,6 +201,11 @@ def test_model(model, test_data):
 
 
 def fit_model(model, train_data, verify_data):
+    print(len(train_data[0]))
+    print(len(train_data[0][0]))
+    print(train_data[0][0][0].size)
+    print(np.array(train_data[0]).shape)
+    print(np.array(verify_data[0]).shape)
     train_images = normalize_images(np.array(train_data[0]))
     numberic_train_labels = np.array([map_labels_to_nummeric(label) for label in train_data[1]])
     train_labels = keras.utils.to_categorical(numberic_train_labels, num_classes=NUM_CLASSES)
@@ -191,6 +213,8 @@ def fit_model(model, train_data, verify_data):
     verify_images = normalize_images(np.array((verify_data[0])))
     numberic_verify_labels = np.array([map_labels_to_nummeric(label) for label in verify_data[1]])
     verify_labels = keras.utils.to_categorical(numberic_verify_labels, num_classes=NUM_CLASSES)
+
+    
 
     if IN_DEBUG_MODE: 
         print("----- SHAPES ------\n")
@@ -204,13 +228,13 @@ def fit_model(model, train_data, verify_data):
          model.fit(
             train_images, train_labels, 
             epochs=10, 
-            validation_data=(verify_images, verify_labels), verbose= 1 if IN_DEBUG_MODE else 0)
+            validation_data=(verify_images, verify_labels), verbose=1)
 
     if STRATEGY == 2:
         model.fit(
             [train_images[:, 0], train_images[:, 1]], train_labels, 
             epochs=10, 
-            validation_data=([verify_images[:, 0], verify_images[:, 1]], verify_labels), verbose= 1 if IN_DEBUG_MODE else 0)
+            validation_data=([verify_images[:, 0], verify_images[:, 1]], verify_labels), verbose=1)
         
     return model
 
@@ -231,7 +255,6 @@ def map_back_label(nummeric_label):
     return mapped_label
 
 
-
 def main():
     model = []
     if TRAIN_MODEL:
@@ -243,35 +266,33 @@ def main():
     test_data = get_data("Test")
     test_labels = np.array([map_labels_to_nummeric(label) for label in test_data[1]])
 
+    if IN_DEBUG_MODE:
+        model.summary()
+
     predictions = test_model(model, test_data)
 
 
-    if IN_DEBUG_MODE:
-        label_index = random.randint(0, len(test_labels)-1)
+    label_index = random.randint(0, len(test_labels)-1)
 
-        print("\n\n")
-        print(f"------ PREDICTION: Index {label_index} --------\n")
-        predicted_nummeric = np.argmax(predictions, axis=-1)
-        predicted_readable = np.vectorize(label_mapping.get)(predicted_nummeric)
+    print("\n\n")
+    print(f"------ PREDICTION: Index {label_index + 1} --------\n")
+    predicted_nummeric = np.argmax(predictions, axis=-1)
+    predicted_readable = np.vectorize(label_mapping.get)(predicted_nummeric)
 
-        actual_readable = np.vectorize(label_mapping.get)(test_labels)
-
-
-        print("NUMMERIC: \n")
-        print(predicted_nummeric[label_index])
-        print("READABLE: \n")
-        print(predicted_readable[label_index])
-        print("\n\n")
-
-        print(f"------ ACTUAL: Index {label_index} ------ \n")
-        print("NUMMERIC: \n")
-        print(test_labels[label_index])
-        print("READABLE: \n")
-        print(actual_readable[label_index])
+    actual_readable = np.vectorize(label_mapping.get)(test_labels)
 
 
-        print()
+    print("NUMMERIC: \n")
+    print(predicted_nummeric[label_index])
+    print("READABLE: \n")
+    print(predicted_readable[label_index])
+    print("\n\n")
 
+    print(f"------ ACTUAL: Index {label_index + 1} ------ \n")
+    print("NUMMERIC: \n")
+    print(test_labels[label_index])
+    print("READABLE: \n")
+    print(actual_readable[label_index])
 
     return
 
