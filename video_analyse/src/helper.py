@@ -19,29 +19,58 @@ class HSVRanges:
     yellow_color = [
         {
             "color_name": "yellow",
-            "lower_bounds": np.array([20, 100, 100]),
-            "upper_bounds": np.array([40, 255, 255]) 
+            "lower_bounds": np.array([15, 100, 100]),
+            "upper_bounds": np.array([50, 255, 255]) 
         }
     ]
 
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([90, 50, 70]),
-            "upper_bounds": np.array([128, 255, 255]) 
-        }
+            "lower_bounds": np.array([100,  100, 85]),
+            "upper_bounds": np.array([120, 255, 255]) 
+        },
     ]
 
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 180]),
-            "upper_bounds": np.array([180, 40, 255])
+            "lower_bounds": np.array([0, 0, 150]),
+            "upper_bounds": np.array([255, 105 , 255])
         }
     ]
 
+class BGRColors: 
+    red_color = [0, 0, 255]
+    yellow_color = [0, 255, 255]
+    blue_color = [255, 0, 0]
+    white_color = [255, 255, 255]
+
+class Preprocess:    
+
+    def process_color(frame, hsv_color, end_color):
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        color_mask = Mask.create_color_mask(hsv, hsv_color)
+        masked_frame = cv2.bitwise_and(frame, frame, mask=color_mask)
+        mask = np.all(masked_frame != [0, 0, 0], axis=-1)
+        frame[mask] = end_color
+        return frame
+    
+    def darken_frame(frame, factor=0.7):
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        hsv[:, :, 2] = hsv[:, :, 2] * factor
+        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
 
+    def start(frame):
+        frame = Preprocess.process_color(frame, HSVRanges.light_grey_color, BGRColors.white_color)
+        frame = Preprocess.process_color(frame, HSVRanges.red_color, BGRColors.red_color)
+        frame = Preprocess.process_color(frame, HSVRanges.blue_color, BGRColors.blue_color)
+        frame = Preprocess.process_color(frame, HSVRanges.yellow_color, BGRColors.yellow_color)
+
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
+        return cv2.bitwise_or(frame, frame, mask=color_mask)
 class Video:
     videoCapture = None
 

@@ -12,11 +12,11 @@ import helper as hp
 
 RESSOURCES_PATH = "../tmp/train/ressources/"
 MODEL_PATH = "../tmp/models"
-TRAIN_DATA_FOLDER = "f2cffe42-a088-479b-9eef-c5b0b8621322"
+TRAIN_DATA_FOLDER = "b6488696-cb4f-469b-b0d1-c1fa7866c24b"
 IMAGE_FOLDER = "Images"
 LABELS_FOLDER = "Labels"
 STRATEGY = 2
-IN_DEBUG_MODE = False
+IN_DEBUG_MODE = True
 JSON_NAME = "scene_results.json"
 
 TRAIN_MODEL = False
@@ -74,13 +74,7 @@ def get_data(stage):
             # Channel order of Pillow is different than OpenCV
             i = np.array(i)[:, :, ::-1]
 
-            if IN_DEBUG_MODE:
-                hp.Out.image_show("hasd", np.array(i), True)
-
-                while True:
-                    if cv2.waitKey(1) & 0xFF == ord('q'): 
-                        break
-
+            i = hp.Preprocess.start(i)
 
             if STRATEGY == 2:
                 img.append(i)
@@ -115,14 +109,64 @@ def map_labels_to_nummeric(label):
 def normalize_images(images):
     return images / NORMALIZE_VALUE
 
-def get_base_model():
-    return keras.models.Sequential([
-        keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS)),
+
+def updated_model():
+    # Define the model
+    # model = keras.models.Sequential()
+
+    # Define input branches for each image
+    input_branch_1 = keras.layers.Input(shape=(180, 320, 3))
+    input_branch_2 = keras.layers.Input(shape=(180, 320, 3))
+
+    # Shared convolutional layers for image processing
+    convolutional_layers = [
+        keras.layers.Conv2D(32, (3, 3), activation='relu'),
         keras.layers.MaxPooling2D((2, 2)),
         keras.layers.Conv2D(64, (3, 3), activation='relu'),
         keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Conv2D(128, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Flatten()
+    ]
+
+    # Process first image
+    x1 = input_branch_1
+    for layer in convolutional_layers:
+        x1 = layer(x1)
+
+    # Process second image
+    x2 = input_branch_2
+    for layer in convolutional_layers:
+        x2 = layer(x2)
+
+    # Concatenate the processed features from both images
+    x = keras.layers.Concatenate(axis=-1)([x1, x2])
+
+    # Dense layers for mapping to cube positions and colors
+    x = keras.layers.Dense(256, activation='relu')(x)
+    x = keras.layers.Dropout(0.2)(x)
+    x = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(x)  # Output layer with 8 * 4 units
+
+    # Reshape the output to (8, 4)
+    output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(x)
+
+    # Build the model with the two input branches and the output layer
+    return keras.models.Model(inputs=[input_branch_1, input_branch_2], outputs=output)
+                
+
+def get_base_model():
+    return keras.models.Sequential([
+        keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS)),
+        keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), kernel_regularizer=keras.regularizers.l2(0.01)),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
+        keras.layers.MaxPooling2D((2, 2)),
         keras.layers.Flatten(),
-        keras.layers.Dense(128, activation='relu'),
+
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(128, activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
+        keras.layers.Dense(128, activation='relu')
     ])
 
 def setup_strategy_one_model(base_model):
@@ -178,14 +222,12 @@ def create_model():
         model = setup_strategy_one_model(model)
     
     if STRATEGY == 2:
-        model = setup_strategy_two_model(model)
+        model = updated_model()
+        # model = setup_strategy_two_model(model)
 
     optimizer = keras.optimizers.legacy.Adam(learning_rate=0.001)
 
-
-    # model.compile(optimizer=optimizer, loss=LOSS_FUNCTION, metrics=['mean_squared_error'])
-
-    model.compile(optimizer=optimizer, loss=LOSS_FUNCTION, metrics=['accuracy'])
+    model.compile(optimizer=optimizer, loss=LOSS_FUNCTION, metrics=['accuracy', 'mean_squared_error'])
 
     return model
 

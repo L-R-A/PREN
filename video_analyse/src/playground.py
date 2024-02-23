@@ -3,7 +3,7 @@ import numpy as np
 import os
 import json
 import helper as hp
-
+from PIL import Image
 
 #region CONFIGURATION CONSTANTS
 
@@ -19,6 +19,25 @@ CHECKED_FRAMES_PER_SIDE = 10
 OUTPUT_FILE_NAME = "output.json"
 OUTPUT_FILE_DIR = "../tmp"
 
+
+SNIPPET_PATHS = [
+    # {
+    #     'one': '../ressources/video_example/config_1_snippets/pos1_1.jpg',
+    #     'two': '../ressources/video_example/config_1_snippets/pos1_2.jpg'
+    # },
+    {
+        'one': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_1.jpg',
+        'two': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_2.jpg',
+    },
+    {
+        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_1.jpg',
+        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_2.jpg'
+    },
+    {
+        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_1.jpg',
+        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_2.jpg'
+    }
+]
 
 #endregion
 
@@ -117,7 +136,7 @@ def contour_enhancement(gray, result):
             if contour_area > max_area:
                     max_area = contour_area
                     best_cnt = contour
-                    result = cv2.drawContours(result, contours, c, (0, 255, 0), 20)
+                    result = cv2.drawContours(result, contours, c, (0, 255, 0), 2)
         c+=1
 
     mask = np.zeros((gray.shape),np.uint8)
@@ -133,20 +152,20 @@ def contour_enhancement(gray, result):
     out = np.zeros_like(gray)
     out[mask == 255] = gray[mask == 255]
 
-    hp.Out.image_show("Out image", out, IN_DEBUG_MODE)
+    # hp.Out.image_show("Out image", out, IN_DEBUG_MODE)
 
     # Image preprocessing
     blur = hp.Video.blur_mask(out)
     processed = hp.Video.threshold_mask(blur)
     eroded = hp.Video.eroded_mask(processed, (10,10))
 
-    hp.Out.image_show("Enhanced image", eroded, IN_DEBUG_MODE)
+    # hp.Out.image_show("Enhanced image", eroded, IN_DEBUG_MODE)
 
     contours, _ = cv2.findContours(eroded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     c = 0
     for i in contours:
-            cv2.drawContours(result, contours, c, (0, 0, 0), 20)
+            cv2.drawContours(result, contours, c, (0, 0, 0), 2)
             c+=1
 
 
@@ -155,7 +174,7 @@ def contour_enhancement(gray, result):
     # cv2.drawContours(result, contours, -1, (0, 0, 0), -1)  # -1 means fill the contours
 
     # Display the result (you can also save it if needed)
-    hp.Out.image_show("Result", result, IN_DEBUG_MODE)
+    # hp.Out.image_show("Result", result, IN_DEBUG_MODE)
 
     # test = cv2.bitwise_or(result, result, mask=threshed)
     
@@ -198,18 +217,36 @@ def cube_detection(frame):
     for x, y, z in cube_positions:
         cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
 
-    hp.Out.image_show("RESULT", frame, IN_DEBUG_MODE)
+    # hp.Out.image_show("RESULT", frame, IN_DEBUG_MODE)
 
 
 def main():
-    video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
+    # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
 
-    while True: 
-        ret, frame = hp.Video.get_next_frame(video)
+    i = 10
 
-        if not ret:
-            break
+    while True: 
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/cce64f92-93dc-4389-8dde-f456471b32e8/Test/Images/Image_9{i}_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/pos1_1.jpg"))
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/b6488696-cb4f-469b-b0d1-c1fa7866c24b/Test/Images/Image_4737_1.jpg"))
+
+        frame = np.array(image_one)[:, :, ::-1]
+
+        hp.Out.image_show("Original", frame, IN_DEBUG_MODE)
+
+        frame = hp.Preprocess.start(frame)
+
+
+        hp.Out.image_show("Processed", frame, IN_DEBUG_MODE)
+
+
+
+        # ret, frame = hp.Video.get_next_frame(video)
+
+
+        # if not ret:
+        #     break
 
         # blue = np.uint8([[[0,255,0]]])
         # blue_hsv = cv2.cvtColor(blue, cv2.COLOR_BGR2HSV)  
@@ -219,22 +256,37 @@ def main():
         # print(lowerLimit)
         # print(upperLimit)
 
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.red_color + hp.HSVRanges.blue_color + hp.HSVRanges.yellow_color)
-        frame = cv2.bitwise_and(frame, frame, mask=color_mask)
+        # frame = hp.Video.blur_mask(frame)
 
 
-        gray_mask = hp.Video.grey_mask(frame)
-        blur = hp.Video.blur_mask(gray_mask)
-        threshed = hp.Video.threshold_mask(blur)
-        eroded_mask = hp.Video.eroded_mask(threshed)
+        # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color)
+        # frame = cv2.bitwise_or(frame, frame, mask=color_mask)
 
 
+        # frame = hp.Video.grey_mask(frame)
 
-        hp.Out.image_show("frame", eroded_mask, IN_DEBUG_MODE)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+        # hp.Out.image_show("test", frame, IN_DEBUG_MODE)
 
 
-        # contour_enhancement(gray_mask, result)
+        # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color)
+        # frame = cv2.bitwise_or(frame, frame, mask=color_mask)
+
+        # hp.Out.image_show("Color Mask", frame, IN_DEBUG_MODE)
+
+        # gray_mask = hp.Video.grey_mask(frame)
+        # blur = hp.Video.blur_mask(gray_mask)
+        # threshed = hp.Video.threshold_mask(blur)
+        # eroded_mask = hp.Video.eroded_mask(threshed)
+
+        # frame = cv2.bitwise_and(frame, frame, mask=blur)
+
+        # hp.Out.image_show("Eroded", frame, IN_DEBUG_MODE)
+
+
+        # contour_enhancement(gray_mask, frame)
 
         # contrast_stretching(gray_mask, result)
         # gamma_correction(gray_mask, result)       
@@ -273,6 +325,8 @@ def main():
 
             if exit_analyse or (cv2.waitKey(1) & 0xFF == ord('q')):
                 break
+
+        i = i + 1
 
 
 

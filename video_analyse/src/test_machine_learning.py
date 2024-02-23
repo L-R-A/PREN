@@ -4,12 +4,10 @@ import keras.api._v2.keras as keras
 import time
 import helper as hp
 import cv2
-import requests
-from io import BytesIO
 from PIL import Image
 
 
-MODEL_PATH = "../tmp/models/f2cffe42-a088-479b-9eef-c5b0b8621322"
+MODEL_PATH = "../tmp/models/b6488696-cb4f-469b-b0d1-c1fa7866c24b"
 VIDEO_PATHS = [
     '../ressources/video_example/01_config.mp4',
     '../ressources/video_example/02_config.mp4',
@@ -22,8 +20,16 @@ SNIPPET_PATHS = [
         'two': '../ressources/video_example/config_1_snippets/pos1_2.jpg'
     },
     {
-        'one': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9001_1.jpg',
-        'two': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9001_2.jpg',
+        'one': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_1.jpg',
+        'two': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_2.jpg',
+    },
+    {
+        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_1.jpg',
+        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_2.jpg'
+    },
+    {
+        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_1.jpg',
+        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_2.jpg'
     }
 ]
 
@@ -98,13 +104,8 @@ def main():
         image_one = np.array(image_one)[:, :, ::-1]
         image_two = np.array(image_two)[:, :, ::-1]
 
-        # hsv = cv2.cvtColor(image_one, cv2.COLOR_BGR2HSV)
-        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color + hp.HSVRanges.blue_color + hp.HSVRanges.red_color + hp.HSVRanges.yellow_color)
-        # image_one = cv2.bitwise_and(image_one, image_one, mask=color_mask)
-
-        # hsv = cv2.cvtColor(image_two, cv2.COLOR_BGR2HSV)
-        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color + hp.HSVRanges.blue_color + hp.HSVRanges.red_color + hp.HSVRanges.yellow_color)
-        # image_two = cv2.bitwise_and(image_two, image_two, mask=color_mask)
+        image_one = hp.Preprocess.start(image_one)
+        image_two = hp.Preprocess.start(image_two)
 
         hp.Out.image_show("one", image_one, IN_DEBUG_MODE)
         hp.Out.image_show("two", image_two, IN_DEBUG_MODE)
