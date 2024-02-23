@@ -1,9 +1,6 @@
 import os
 import numpy as np
 import keras.api._v2.keras as keras
-import time
-import helper as hp
-import cv2
 from PIL import Image
 
 MODEL_PATH = "../tmp/models/b5fee2f7-e6c1-4e97-83b2-710c5393cc14"
