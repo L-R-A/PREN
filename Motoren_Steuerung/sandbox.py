@@ -1,5 +1,15 @@
-# PREN Gruppe Skogahöf
+# PREN Gruppe Skogahöf 
 # Motorentreiber
+# 
+# USEFULL LINKS ------------------------------------------
+# Servo-Hat
+# https://cdn-learn.adafruit.com/downloads/pdf/adafruit-16-channel-pwm-servo-hat-for-raspberry-pi.pdf
+# 
+# Stepper-Hat
+# https://docs.circuitpython.org/projects/motorkit/en/latest/
+# 
+# Stepper Data-Sheet
+# https://cdn-shop.adafruit.com/product-files/324/C140-A+datasheet.jpg
 # 
 # INSTALLATION -------------------------------------------
 #
@@ -10,7 +20,6 @@
 # pip3 install adafruit-circuitpython-motorkit
 #
 #---------------------------------------------------------
-
 
 import time
 from adafruit_servokit import ServoKit
