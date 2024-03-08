@@ -13,29 +13,34 @@
 # 
 # INSTALLATION -------------------------------------------
 #
+# sudo apt-get install python-smbus
+# sudo apt-get install i2c-tools
+#
 # install Servo-Hat package:
-# pip3 install adafruit-circuitpython-servokit
+# sudo pip3 install adafruit-circuitpython-servokit
 #
 # install Stepper-Hat package:
-# pip3 install adafruit-circuitpython-motorkit
+# sudo pip3 install adafruit-circuitpython-motorkit
 #
 #---------------------------------------------------------
 
 import time
+import board
+import busio
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 
-# Set channels to the number of servo channels on your kit.
-# 8 for FeatherWing, 16 for Shield/HAT/Bonnet.
-servoKit = ServoKit(channels=8)
+# initialize i2c
+i2c = busio.I2C(board.SCL, board.SDA)
 
-# Set up Stepper Kit
-stepperKit = MotorKit()
+# initialize shields
+servoKit = ServoKit(channels=16,address=0x42)
+stepperKit = MotorKit(address=0x61,i2c=board.I2C())
 
-stepperKit.motor1.throttle = 1.0
-time.sleep(0.5)
-stepperKit.motor1.throttle = 0
-
+# Test Stepper
+for i in range(10):
+    stepperKit.stepper1.onestep()
+    stepperKit.stepper2.onestep()
 
 # Test Servo
 servoKit.servo[0].angle = 180
@@ -46,6 +51,4 @@ time.sleep(1)
 servoKit.servo[0].angle = 0
 servoKit.continuous_servo[1].throttle = 0
 
-# Test Stepper
-for i in range(100):
-    stepperKit.stepper1.onestep()
+
