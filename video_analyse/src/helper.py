@@ -51,9 +51,7 @@ class Preprocess:
     def process_color(frame, hsv_color, end_color):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, hsv_color)
-        masked_frame = cv2.bitwise_and(frame, frame, mask=color_mask)
-        mask = np.all(masked_frame != [0, 0, 0], axis=-1)
-        frame[mask] = end_color
+        frame[color_mask != 0] = end_color
         return frame
     
     def darken_frame(frame, factor=0.7):
@@ -65,8 +63,8 @@ class Preprocess:
     def start(frame):
         frame = Preprocess.process_color(frame, HSVRanges.light_grey_color, BGRColors.white_color)
         frame = Preprocess.process_color(frame, HSVRanges.red_color, BGRColors.red_color)
-        frame = Preprocess.process_color(frame, HSVRanges.blue_color, BGRColors.blue_color)
         frame = Preprocess.process_color(frame, HSVRanges.yellow_color, BGRColors.yellow_color)
+        frame = Preprocess.process_color(frame, HSVRanges.blue_color, BGRColors.blue_color)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
