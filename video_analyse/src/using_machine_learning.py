@@ -2,10 +2,8 @@ import os
 import json
 from PIL import Image
 import numpy as np
-# import tensorflow as tf
 import keras.api._v2.keras as keras
 import random
-import cv2
 import helper as hp
 
 
@@ -23,7 +21,6 @@ TRAIN_MODEL = False
 
 IMAGE_HEIGHT_PX = 180
 IMAGE_WIDTH_PX = 320
-# RGB has 3 channels 
 NUM_CHANNELS = 3
 NUM_CLASSES = 4
 NUM_POSITIONS = 8
@@ -111,8 +108,6 @@ def normalize_images(images):
 
 
 def updated_model():
-    # Define the model
-    # model = keras.models.Sequential()
 
     # Define input branches for each image
     input_branch_1 = keras.layers.Input(shape=(180, 320, 3))
@@ -139,59 +134,55 @@ def updated_model():
     for layer in convolutional_layers:
         x2 = layer(x2)
 
-    # Concatenate the processed features from both images
     x = keras.layers.Concatenate(axis=-1)([x1, x2])
-
-    # Dense layers for mapping to cube positions and colors
     x = keras.layers.Dense(256, activation='relu')(x)
     x = keras.layers.Dropout(0.2)(x)
     x = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(x)  # Output layer with 8 * 4 units
 
-    # Reshape the output to (8, 4)
     output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(x)
 
     # Build the model with the two input branches and the output layer
     return keras.models.Model(inputs=[input_branch_1, input_branch_2], outputs=output)
                 
 
-def get_base_model():
-    return keras.models.Sequential([
-        keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS)),
-        keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), kernel_regularizer=keras.regularizers.l2(0.01)),
-        keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Conv2D(64, (3, 3), activation='relu'),
-        keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
-        keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Flatten(),
+# def get_base_model():
+#     return keras.models.Sequential([
+#         keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS)),
+#         keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), kernel_regularizer=keras.regularizers.l2(0.01)),
+#         keras.layers.MaxPooling2D((2, 2)),
+#         keras.layers.Conv2D(64, (3, 3), activation='relu'),
+#         keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
+#         keras.layers.MaxPooling2D((2, 2)),
+#         keras.layers.Flatten(),
 
-        keras.layers.Dropout(0.2),
-        keras.layers.Dense(128, activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
-        keras.layers.Dense(128, activation='relu')
-    ])
+#         keras.layers.Dropout(0.2),
+#         keras.layers.Dense(128, activation='relu', kernel_regularizer=keras.regularizers.l2(0.01)),
+#         keras.layers.Dense(128, activation='relu')
+#     ])
 
-def setup_strategy_one_model(base_model):
-    input_image = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_1')
+# def setup_strategy_one_model(base_model):
+#     input_image = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_1')
 
-    input = base_model(input_image)
+#     input = base_model(input_image)
 
-    dense_layer = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(input)
-    reshaped_output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(dense_layer)
+#     dense_layer = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(input)
+#     reshaped_output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(dense_layer)
 
-    return keras.models.Model(inputs=[input_image], outputs=reshaped_output)
+#     return keras.models.Model(inputs=[input_image], outputs=reshaped_output)
 
-def setup_strategy_two_model(base_model):
-    input_image_1 = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_1')
-    input_image_2 = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_2')
+# def setup_strategy_two_model(base_model):
+#     input_image_1 = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_1')
+#     input_image_2 = keras.layers.Input(shape=(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX, NUM_CHANNELS), name='input_image_2')
 
-    encoded_left = base_model(input_image_1)
-    encoded_right = base_model(input_image_2)
+#     encoded_left = base_model(input_image_1)
+#     encoded_right = base_model(input_image_2)
 
-    concatenated = keras.layers.Concatenate(axis=-1)([encoded_left, encoded_right])
+#     concatenated = keras.layers.Concatenate(axis=-1)([encoded_left, encoded_right])
 
-    dense_layer = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(concatenated)
-    reshaped_output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(dense_layer)
+#     dense_layer = keras.layers.Dense(NUM_POSITIONS * NUM_CLASSES, activation='softmax')(concatenated)
+#     reshaped_output = keras.layers.Reshape((NUM_POSITIONS, NUM_CLASSES))(dense_layer)
 
-    return keras.models.Model(inputs=[input_image_1, input_image_2], outputs=reshaped_output)
+#     return keras.models.Model(inputs=[input_image_1, input_image_2], outputs=reshaped_output)
 
 
 # def get_siamese_network(base_model):
@@ -312,7 +303,6 @@ def main():
         model.summary()
 
     predictions = test_model(model, test_data)
-
 
     label_index = random.randint(0, len(test_labels)-1)
 

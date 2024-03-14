@@ -27,16 +27,16 @@ class HSVRanges:
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100,  100, 85]),
-            "upper_bounds": np.array([120, 255, 255]) 
+            "lower_bounds": np.array([100,  100, 80]),
+            "upper_bounds": np.array([180, 255, 255]) 
         },
     ]
 
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 150]),
-            "upper_bounds": np.array([255, 105 , 255])
+            "lower_bounds": np.array([0, 0, 190]),
+            "upper_bounds": np.array([255, 65 , 255])
         }
     ]
 
@@ -70,7 +70,9 @@ class Preprocess:
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
-        return cv2.bitwise_or(frame, frame, mask=color_mask)
+        frame = cv2.bitwise_or(frame, frame, mask=color_mask)
+        return Video.blur_mask(frame)
+
 class Video:
     videoCapture = None
 
