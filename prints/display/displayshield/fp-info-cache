@@ -1,4 +1,4 @@
-22694788456241287
+22696498877547430
 6502netzteil
 EI30
 
@@ -20,6 +20,13 @@ WOG_Rectifier_D9.00mm
 0
 4
 4
+ADAFRUIT
+ADS1015
+Through hole straight pin header, 1x06, 2.54mm pitch, single row
+Through hole pin header THT 1x06 2.54mm single row
+0
+12
+12
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
