@@ -143,8 +143,6 @@ def contour_enhancement(gray, result):
     cv2.drawContours(mask,[best_cnt],0,255,-1)
     cv2.drawContours(mask,[best_cnt],0,0,2)
 
-    hp.Out.image_show("Zwischenresultat", result, IN_DEBUG_MODE)
-
     print(mask == 0)
 
 
@@ -224,19 +222,36 @@ def main():
     # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
 
-    i = 10
+    i = 100
 
     while True: 
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/cce64f92-93dc-4389-8dde-f456471b32e8/Test/Images/Image_9{i}_1.jpg"))
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/65138333-0cc0-44bf-8e08-2f24b13f0663/Test/Images/Image_9{i}_1.jpg"))
         # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/pos1_1.jpg"))
-        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/b6488696-cb4f-469b-b0d1-c1fa7866c24b/Test/Images/Image_4737_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/b6488696-cb4f-469b-b0d1-c1fa7866c24b/Test/Images/Image_4737_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/Image_1_1.jpg"))
 
-        frame = np.array(image_one)[:, :, ::-1]
+        translation_range = (-5, 5)
 
+        tx = np.random.randint(translation_range[0], translation_range[1])
+        ty = np.random.randint(translation_range[0], translation_range[1])
+
+        M = np.float32([[1, 0, tx],
+                [0, 1, ty]])
+                
+        image_one = image_one.resize((160, 120))
+
+        # frame = np.array(image_one)[:, :, ::-1]
+        frame = np.array(image_one)
+
+        frame = hp.Preprocess.convert_to_BGR(frame)
+
+        frame = cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+
+
+        frame = frame[0:115, 10:150]    
         hp.Out.image_show("Original", frame, IN_DEBUG_MODE)
 
         frame = hp.Preprocess.start(frame)
-
 
         hp.Out.image_show("Processed", frame, IN_DEBUG_MODE)
 

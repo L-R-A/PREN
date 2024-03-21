@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import os
-import json
 import helper as hp
 from PIL import Image
 import keras.api._v2.keras as keras
