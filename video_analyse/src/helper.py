@@ -27,8 +27,8 @@ class HSVRanges:
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100,  100, 80]),
-            "upper_bounds": np.array([180, 255, 255]) 
+            "lower_bounds": np.array([100, 100, 50]),
+            "upper_bounds": np.array([130, 255, 255])
         },
     ]
 
@@ -58,9 +58,37 @@ class Preprocess:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         hsv[:, :, 2] = hsv[:, :, 2] * factor
         return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    
+    def lighten_frame(frame, factor=50):
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        hsv[:,:,2] += factor
+        hsv[:,:,2] = np.clip(hsv[:,:,2], 0, 255)
+        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    
+    def remove_isolated_white_pixels(image):
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+        _, binary = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        mask = np.ones_like(image, dtype=np.uint8) * 255
+
+        for contour in contours:
+            # Minimal white area (pixles) to be not ignored
+            if cv2.contourArea(contour) > 10: 
+                cv2.drawContours(mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
+            else:
+                cv2.drawContours(mask, [contour], -1, (0, 0, 0), thickness=cv2.FILLED)
+
+        return cv2.bitwise_and(image, mask)
+    
+    def convert_to_BGR(frame):
+        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     def start(frame):
+        frame = Preprocess.darken_frame(frame, 0.95)
+
         frame = Preprocess.process_color(frame, HSVRanges.light_grey_color, BGRColors.white_color)
         frame = Preprocess.process_color(frame, HSVRanges.red_color, BGRColors.red_color)
         frame = Preprocess.process_color(frame, HSVRanges.yellow_color, BGRColors.yellow_color)
@@ -69,6 +97,7 @@ class Preprocess:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
         frame = cv2.bitwise_or(frame, frame, mask=color_mask)
+        # return Video.blur_mask(Preprocess.remove_isolated_white_pixels(frame))
         return Video.blur_mask(frame)
 
 class Video:
@@ -126,6 +155,17 @@ class Video:
         width = int((frame.shape[1] * percentage) / 100)
         height = int((frame.shape[0] * percentage) / 100)
         return cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
+    
+    def translate_image(frame):
+        translation_range = (-5, 5)
+
+        tx = np.random.randint(translation_range[0], translation_range[1])
+        ty = np.random.randint(translation_range[0], translation_range[1])
+
+        M = np.float32([[1, 0, tx],
+            [0, 1, ty]])
+
+        return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
 
 class Terminal_Color:
    PURPLE = '\033[95m'
