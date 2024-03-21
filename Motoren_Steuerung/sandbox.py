@@ -43,6 +43,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 
 # initialize ADC
 ads = ADS.ADS1015(i2c)
+ads.gain = 2/3
 chan0 = AnalogIn(ads, ADS.P0)
 chan1 = AnalogIn(ads, ADS.P1)
 chan2 = AnalogIn(ads, ADS.P2)
@@ -53,11 +54,10 @@ servoKit = ServoKit(channels=16,address=0x42)
 stepperKit = MotorKit(address=0x61,i2c=board.I2C())
 
 # Test ADC
-print(chan0.value, chan0.voltage)
-print(chan1.value, chan1.voltage)
-print(chan2.value, chan2.voltage)
-print(chan3.value, chan3.voltage)
-
+print("A0: {:.2f} V ({}) {:.3f} A".format(chan0.voltage, chan0.value, (0.066/(2.46908 - chan0.voltage))))
+print("A1: {:.2f} V ({})".format(chan1.voltage, chan1.value))
+print("A2: {:.2f} V ({})".format(chan2.voltage, chan2.value))
+print("A3: {:.2f} V ({})".format(chan3.voltage, chan3.value))
 
 # Test Stepper
 for i in range(600):
