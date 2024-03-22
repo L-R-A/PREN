@@ -15,11 +15,15 @@
 # (https://learn.adafruit.com/raspberry-pi-analog-to-digital-converters/ads1015-slash-ads1115)
 # https://learn.adafruit.com/adafruit-4-channel-adc-breakouts/python-circuitpython
 #
-# INSTALLATION -------------------------------------------
+# LCD 
+# https://github.com/bogdal/rpi-lcd
 #
+# INSTALLATION -------------------------------------------
+# basic Tools:
 # sudo apt-get install python-smbus
 # sudo apt-get install i2c-tools
 # 
+# install adc library:
 # sudo pip3 install adafruit-circuitpython-ads1x15
 #
 # install Servo-Hat package:
@@ -28,15 +32,21 @@
 # install Stepper-Hat package:
 # sudo pip3 install adafruit-circuitpython-motorkit
 #
+# install lcd library:
+# pip install RPLCD
+# 
 #---------------------------------------------------------
 
 import time
 import board
+import digitalio
 import busio
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import adafruit_character_lcd.character_lcd as character_lcd
+
 
 # initialize i2c
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -49,9 +59,17 @@ chan1 = AnalogIn(ads, ADS.P1)
 chan2 = AnalogIn(ads, ADS.P2)
 chan3 = AnalogIn(ads, ADS.P3)
 
+# initialize LCD
+lcd_columns = 16
+lcd_rows = 2
+lcd = character_lcd.Character_LCD_Mono(9, 10, 16, 19, 20, 21, lcd_columns, lcd_rows)
+
 # initialize shields
 servoKit = ServoKit(channels=16,address=0x42)
 stepperKit = MotorKit(address=0x61,i2c=board.I2C())
+
+# Test LCD
+lcd.message = "Why are you gay?"
 
 # Test ADC
 print("A0: {:.2f} V ({}) {:.3f} A".format(chan0.voltage, chan0.value, (0.066/(2.46908 - chan0.voltage))))
