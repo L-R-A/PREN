@@ -45,7 +45,7 @@ import board
 import busio
 import digitalio
 #import RPi.GPIO as GPIO
-#from displaylib import LCD_driver as LCD
+from displaylib import LCD_driver as LCD
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
@@ -70,8 +70,9 @@ def current_measurement(chan0,chan1,chan2,chan3):
         #    print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
         #    print_timer = print_timer + 0.2
         print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
+        LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
         time.sleep(loop_time)
-    
+    LCD.clear()
 
 def main():
     # initialize i2c
@@ -88,6 +89,9 @@ def main():
     # initialize shields
     servoKit = ServoKit(channels=16,address=0x42)
     stepperKit = MotorKit(address=0x61,i2c=board.I2C())
+
+    # initialize LCD
+    LCD.init()
 
     # Initialize GPIO
     start = digitalio.DigitalInOut(board.D13)

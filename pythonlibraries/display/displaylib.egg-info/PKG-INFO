@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: displaylib
+Version: 0.1.0
+Summary: Driver fo 16x2 LCD Displays
+Author: Luzian Aufdenblatten using Matts Code (www.raspberrypi-spy.co.uk)
