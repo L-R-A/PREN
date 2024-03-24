@@ -157,7 +157,7 @@ class Video:
         return cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
     
     def translate_image(frame):
-        translation_range = (-5, 5)
+        translation_range = (-10, 10)
 
         tx = np.random.randint(translation_range[0], translation_range[1])
         ty = np.random.randint(translation_range[0], translation_range[1])
@@ -166,6 +166,25 @@ class Video:
             [0, 1, ty]])
 
         return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+
+class Augmentation:
+    def black_spots(image, num_spots=5, spot_size_range=(5, 10)):
+        image_copy = image.copy()
+
+        for _ in range(num_spots):
+            # Generate random spot properties
+            spot_size = np.random.randint(spot_size_range[0], spot_size_range[1]) // 2  # Integer division for diameter
+            spot_center_x = np.random.randint(0 + spot_size, image.shape[1] - spot_size)
+            spot_center_y = np.random.randint(0 + spot_size, image.shape[0] - spot_size)
+
+            # Create elliptical mask for the spot
+            mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)  # Create mask with same shape as first channel
+            cv2.ellipse(mask, (spot_center_x, spot_center_y), (spot_size, spot_size), 0, 0, 360, color=255, thickness=-1)
+
+            # Apply mask to selectively set pixels to black
+            image_copy[mask == 255] = [0, 0, 0]  # Set to black in BGR format
+
+        return image_copy
 
 class Terminal_Color:
    PURPLE = '\033[95m'

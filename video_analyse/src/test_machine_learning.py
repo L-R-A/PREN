@@ -7,7 +7,8 @@ import cv2
 from PIL import Image
 
 
-MODEL_PATH = "../tmp/models/b6488696-cb4f-469b-b0d1-c1fa7866c24b"
+MODEL_PATH = "../tmp/models/v1_no_base_50000.keras"
+
 VIDEO_PATHS = [
     '../ressources/video_example/01_config.mp4',
     '../ressources/video_example/02_config.mp4',
@@ -16,28 +17,49 @@ VIDEO_PATHS = [
 
 SNIPPET_PATHS = [
     {
-        'one': '../ressources/video_example/config_1_snippets/pos1_1.jpg',
-        'two': '../ressources/video_example/config_1_snippets/pos1_2.jpg'
+        'one': '../ressources/video_example/config_1_snippets/image1_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image1_2.jpg'
+    },
+    {            
+        'one': '../ressources/video_example/config_1_snippets/image2_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image2_2.jpg'
     },
     {
-        'one': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_1.jpg',
-        'two': '../tmp/train/ressources/f2cffe42-a088-479b-9eef-c5b0b8621322/Test/Images/Image_9005_2.jpg',
+        'one': '../ressources/video_example/config_1_snippets/image3_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image3_2.jpg'
     },
     {
-        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_1.jpg',
-        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9030_2.jpg'
+        'one': '../ressources/video_example/config_1_snippets/image4_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image4_2.jpg'
     },
     {
-        'one': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_1.jpg',
-        'two': '../tmp/train/ressources/b5fee2f7-e6c1-4e97-83b2-710c5393cc14/Test/Images/Image_9050_2.jpg'
-    }
+        'one': '../ressources/video_example/config_1_snippets/image5_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image5_2.jpg'
+    },
+    {
+        'one': '../ressources/video_example/config_1_snippets/image6_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image6_2.jpg'
+    },
+    {
+        'one': '../ressources/video_example/config_1_snippets/image7_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image7_2.jpg'
+    },
+    {
+        'one': '../ressources/video_example/config_1_snippets/image8_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image8_2.jpg'
+    },
+    {
+        'one': '../ressources/video_example/config_1_snippets/image9_1.jpg',
+        'two': '../ressources/video_example/config_1_snippets/image9_2.jpg'
+    },
 ]
 
 VIDEO_STREAM_URL = 'http://127.0.0.1:5000/video_feed'
 
 
-IMAGE_HEIGHT_PX = 180
-IMAGE_WIDTH_PX = 320
+IMAGE_HEIGHT_PX = 120
+IMAGE_WIDTH_PX = 160
+
 NORMALIZE_VALUE = 255
 
 STRATEGY = 2
@@ -64,27 +86,6 @@ def predict(model, input):
     if STRATEGY == 2:
         return model.predict([input[:, 0], input[:, 1]])
 
-# def main():
-#     response = requests.get(VIDEO_STREAM_URL, stream=True).raw
-
-#     frame = cv2.imdecode(np.frombuffer(response.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
-
-#     print("Herer")
-#     hp.Out.image_show("Frame", frame, IN_DEBUG_MODE)
-
-#     if IN_DEBUG_MODE:
-
-#         if FRAME_STEP_BY_STEP:
-#             while True:
-#                 # Press enter to run next frame
-#                 if cv2.waitKey(1) == 13:
-#                     break
-
-#                 if cv2.waitKey(1) & 0xFF == ord('q'):
-#                     exit_analyse = True
-#                     break
-
-
 def main():
     model = keras.models.load_model(os.path.join(os.path.dirname(os.path.abspath(__file__)), MODEL_PATH))
 
@@ -100,9 +101,13 @@ def main():
         image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
         image_two = image_two.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
 
+
         # Channel order of Pillow is different than OpenCV
         image_one = np.array(image_one)[:, :, ::-1]
         image_two = np.array(image_two)[:, :, ::-1]
+
+        image_one = image_one[0:115, 10:150]
+        image_two = image_two[0:115, 10:150]
 
         image_one = hp.Preprocess.start(image_one)
         image_two = hp.Preprocess.start(image_two)
@@ -139,83 +144,6 @@ def main():
 
         index = index + 1
 
-
-
-# def main():
-#     model = []
-#     model = keras.models.load_model(os.path.join(os.path.dirname(os.path.abspath(__file__)), MODEL_PATH))
-
-#     if IN_DEBUG_MODE:
-#         model.summary()
-
-#     video_predictions = {
-#         "config_one": [],
-#         "config_two": [],
-#         "config_three": []
-#     }
-
-#     for video_path in VIDEO_PATHS:
-
-
-#         start_time = time.time()
-
-#         cap = cv2.VideoCapture(os.path.join(os.path.dirname(os.path.abspath(__file__)), video_path))
-
-#         predictions = []
-#         images = []
-#         index = 0
-
-#         while True:
-#             ret, frame = cap.read()
-
-
-#             if not ret:
-#                 print("VIDEO FINISHED")
-#                 break
-
-#             frame = cv2.resize(frame, (IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
-
-#             hp.Out.image_show("OUT", frame, IN_DEBUG_MODE)
-
-#             if cv2.waitKey(1) & 0xFF == ord('q'):
-#                 break
-
-#             if (index != 0):
-#                 if not check_time_passed(start_time, HALF_ROTATION_TIME / 2):
-#                     continue
-
-#             normalized = normalize_images(frame)
-
-#             images.append(normalized)
-
-#             if index != 0:
-#                 break
-
-#             index = index + 1
-
-
-
-#         print(len(images))
-#         print(len(images[: 0]))
-#         print(len(images[: 1]))
-#         print(np.array(images).shape)
-#         print(np.array([np.array(images)]).shape)
-
-
-#         predictions = predict(model, np.array([np.array(images)]))
-
-#         print("\n\n")
-#         print(f"------ PREDICTION: video {video_path} --------\n")
-#         predicted_nummeric = np.argmax(predictions, axis=-1)
-#         predicted_readable = np.vectorize(label_mapping.get)(predicted_nummeric)
-
-#         print("NUMMERIC: \n")
-#         print(predicted_nummeric)
-#         print("READABLE: \n")
-#         print(predicted_readable)
-#         print("\n\n")
-
-#     return
 
 if __name__ == "__main__":
     main()

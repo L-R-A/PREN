@@ -27,14 +27,3 @@ class Stream:
 
         frame = cv2.resize(frame, (width, height))
         return frame
-
-img1 = Stream.getFrame(600, 400, 0)
-img2 = Stream.getFrame(600, 400, 13*21)
-
-if img1 is not None and img2 is not None:
-
-    while True:
-        cv2.imshow('0', img1)
-        cv2.imshow('180', img2)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break

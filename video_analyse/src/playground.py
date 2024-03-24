@@ -225,30 +225,25 @@ def main():
     i = 100
 
     while True: 
-        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/65138333-0cc0-44bf-8e08-2f24b13f0663/Test/Images/Image_9{i}_1.jpg"))
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
         # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/pos1_1.jpg"))
         # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/b6488696-cb4f-469b-b0d1-c1fa7866c24b/Test/Images/Image_4737_1.jpg"))
         # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/Image_1_1.jpg"))
-
-        translation_range = (-5, 5)
-
-        tx = np.random.randint(translation_range[0], translation_range[1])
-        ty = np.random.randint(translation_range[0], translation_range[1])
-
-        M = np.float32([[1, 0, tx],
-                [0, 1, ty]])
                 
         image_one = image_one.resize((160, 120))
+
 
         # frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
 
         frame = hp.Preprocess.convert_to_BGR(frame)
 
-        frame = cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+        frame = hp.Video.translate_image(frame)
 
+        frame = frame[0:115, 10:150]
 
-        frame = frame[0:115, 10:150]    
+        frame = hp.Augmentation.black_spots(frame, 10)
+
         hp.Out.image_show("Original", frame, IN_DEBUG_MODE)
 
         frame = hp.Preprocess.start(frame)
