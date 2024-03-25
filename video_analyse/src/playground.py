@@ -232,7 +232,6 @@ def main():
                 
         image_one = image_one.resize((160, 120))
 
-
         # frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
 

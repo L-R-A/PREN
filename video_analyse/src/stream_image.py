@@ -8,7 +8,7 @@ class Stream:
     PWD = '463997'
     PARAM = 'pren_profile_small'
 
-    def getFrame(width, height, f):
+    def getFrame(width, height, f, amount=1):
         cap = cv2.VideoCapture('rtsp://'+
         Stream.NAME+
         ':'+Stream.PWD+
@@ -19,11 +19,18 @@ class Stream:
             print('Warning: unable to open video source: ', Stream.IP)
             return None
         
+        frames=[]
+        
         frame = None
         c = 0
         while c <= f:
             ret, frame = cap.read()
             c += 1
 
-        frame = cv2.resize(frame, (width, height))
-        return frame
+        while c <= (f + (amount)):
+            ret, frame = cap.read()
+            c += 1
+            frame = cv2.resize(frame, (width, height))
+            frames.append(frame)
+        
+        return frames
