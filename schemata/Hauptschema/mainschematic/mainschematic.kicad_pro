@@ -318,7 +318,11 @@
     ],
     [
       "4bbb1170-56e8-490a-b188-15375f85920c",
-      "HallSensor"
+      "HallSensor1"
+    ],
+    [
+      "9f2e8ec2-7565-438c-855e-9170f25d2d2f",
+      "HallSensor2"
     ]
   ],
   "text_variables": {}
