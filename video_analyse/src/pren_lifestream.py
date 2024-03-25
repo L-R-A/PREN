@@ -4,13 +4,14 @@ import copy as cp
 import numpy as np
 import os
 import keras.api._v2.keras as keras
+import stream_image as st
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
 
 FPS = 21
 RT = 15
-REDUNDANCY = 1
+REDUNDANCY = 100
 
 def open_camera_profile(ip_address, username, password, profile): # Open the camera
     cap = cv2.VideoCapture('rtsp://' +
@@ -68,7 +69,7 @@ def open_camera_profile(ip_address, username, password, profile): # Open the cam
     return images
 
     
-MODEL_NAME = "v5_data_10000" + ".keras"
+MODEL_NAME = "v1_no_base_50000" + ".keras"
 MODEL_PATH = os.path.join("..", "tmp", "models")
 
 color_mapping = { 'red': 0, 'yellow': 1, 'blue': 2, '': 3 }
@@ -96,8 +97,8 @@ def predict_positions(image_pair):
     print(predicted_readable)
     print("\n\n")
 
-result = open_camera_profile('147.88.48.131', 'pren', '463997', 'pren_profile_small')
-predict_positions(result)
+# result = open_camera_profile('147.88.48.131', 'pren', '463997', 'pren_profile_small')
+# predict_positions(result)
 
 def stream_only (ip_address, username, password, profile):
     cap = cv2.VideoCapture('rtsp://' +
@@ -125,4 +126,17 @@ def stream_only (ip_address, username, password, profile):
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-# stream_only('147.88.48.131', 'pren', '463997', 'pren_profile_small')
+stream_only('147.88.48.131', 'pren', '463997', 'pren_profile_small')
+
+# AMOUNT = 100
+
+# for a in range(0, AMOUNT):
+#     print(a)
+#     img1 = st.Stream.getFrame(640, 480, 0)
+#     img2 = st.Stream.getFrame(640, 480, 13*21)
+
+#     # Saving the image 
+#     cv2.imwrite(f'./tmp/image9_1.jpg', img1) 
+#     cv2.imwrite(f'./tmp/image9_2.jpg', img2)
+
+        
