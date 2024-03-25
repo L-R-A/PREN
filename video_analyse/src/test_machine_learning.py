@@ -8,7 +8,8 @@ from PIL import Image
 
 
 # MODEL_PATH = "../model/v1_no_base_50000.keras"
-MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
+# MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
+MODEL_PATH = "../tmp/models/v1_no_base_10000.keras"
 BUNDLES = [
     {
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
@@ -19,20 +20,24 @@ BUNDLES = [
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
         'result': np.array([1, 3, 2, 2, 3, 3, 1, 0]),
         'name': 'a5119e66-947d-45e0-b229-549b1ca79393'
-    }        
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([1, 3, 2, 2, 3, 3, 1, 0]),
+        'name': 'f33fa7bf-4a55-47c1-85bf-3c62ea456efc'
+    },       
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([1, 3, 2, 2, 3, 3, 1, 0]),
+        'name': '6137b988-bfa4-4aa8-8034-f91382cbd425'
+    }       
 ]
-
-VIDEO_STREAM_URL = 'http://127.0.0.1:5000/video_feed'
 
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
-
 NORMALIZE_VALUE = 255
-
 IN_DEBUG_MODE = False
-
-HALF_ROTATION_TIME = 15
 
 color_mapping = { 'red': 0, 'yellow': 1, 'blue': 2, '': 3 }
 label_mapping = { 0: 'red', 1: 'yellow', 2: 'blue', 3: ''}
@@ -82,6 +87,7 @@ def main():
             image = np.array(image)[:, :, ::-1]
             image = image[0:115, 10:150]
             image = hp.Preprocess.start(image)
+            # image = hp.Augmentation.black_spots(image, 100)
 
             if IN_DEBUG_MODE:
                 hp.Out.image_show("Image", image, IN_DEBUG_MODE)
@@ -96,9 +102,7 @@ def main():
             if i % 2 == 0:
                 images.append([normalized])
             else:
-                images[len(images) - 1].append(normalized)
-        print(filenames)
-    
+                images[len(images) - 1].append(normalized)    
     images = np.array(images)
 
     predictions = np.argmax(predict(model, images), axis=-1)
@@ -112,8 +116,8 @@ def main():
     for bundle in BUNDLES:
         files = os.listdir(os.path.join(bundle['path'], bundle['name']))
         for i in range(0, int(len(files) / 2)):
-            common_elements = np.count_nonzero(np.in1d(bundle['result'], predictions[index]))
-            coverage_percent = (common_elements / len(predictions[index])) * 100
+            intersection = np.sum(bundle['result'] == predictions[index])
+            coverage_percent = (intersection / len(bundle['result'])) * 100
             data.append({"ID": index + 1, "Actual": np.array2string(bundle['result']), "Prediction": np.array2string(predictions[index]), "Accuracy": coverage_percent})
             index = index + 1
             total_accuracy = total_accuracy + coverage_percent
