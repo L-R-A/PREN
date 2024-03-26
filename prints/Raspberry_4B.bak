@@ -1,6 +1,6 @@
 (kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)
   (symbol "CurrentSensor" (in_bom yes) (on_board yes)
-    (property "Reference" "U" (at 0 0 0)
+    (property "Reference" "CurrentSensor" (at 8.89 0 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "" (at 0 0 0)
@@ -12,13 +12,11 @@
     (property "Datasheet" "" (at 0 0 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (symbol "CurrentSensor_0_1"
+    (symbol "CurrentSensor_1_1"
       (rectangle (start -1.27 -1.27) (end 17.78 -8.89)
         (stroke (width 0) (type default))
-        (fill (type none))
+        (fill (type background))
       )
-    )
-    (symbol "CurrentSensor_1_1"
       (pin input line (at -3.81 -2.54 0) (length 2.54)
         (name "VDD" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))

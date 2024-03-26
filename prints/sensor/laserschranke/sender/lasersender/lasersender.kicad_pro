@@ -49,7 +49,9 @@
         }
       },
       "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "lib_footprint_mismatch|114045000|95000000|ebf31e16-d423-408a-b39a-65f7bd3c62b2|00000000-0000-0000-0000-000000000000"
+      ],
       "meta": {
         "version": 2
       },
@@ -100,7 +102,7 @@
         "tracks_crossing": "error",
         "unconnected_items": "error",
         "unresolved_variable": "error",
-        "via_dangling": "warning",
+        "via_dangling": "ignore",
         "zones_intersect": "error"
       },
       "rules": {
@@ -390,7 +392,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "mainschematic.kicad_pro",
+    "filename": "lasersender.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -467,24 +469,8 @@
   },
   "sheets": [
     [
-      "086318dd-19eb-4c26-88b2-e7f1a0e5d55a",
+      "d47ce2ff-ca40-4959-934c-173dd426194a",
       ""
-    ],
-    [
-      "de8c6f10-2835-4d43-af0d-4c06e8a28792",
-      "Displayshield"
-    ],
-    [
-      "4bbb1170-56e8-490a-b188-15375f85920c",
-      "HallSensor1"
-    ],
-    [
-      "9f2e8ec2-7565-438c-855e-9170f25d2d2f",
-      "HallSensor2"
-    ],
-    [
-      "c957c15a-75be-46b1-be3e-0ffcca22206d",
-      "LaserSender"
     ]
   ],
   "text_variables": {}

@@ -49,7 +49,11 @@
         }
       },
       "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "lib_footprint_mismatch|135045000|94500000|bbd6dc64-b3ac-43f9-9277-9fd87c2087d4|00000000-0000-0000-0000-000000000000",
+        "starved_thermal|142000000|93000000|7b4bd036-f76e-4d5d-97b3-3d4d09161561|972bda99-30ef-496d-88d2-7c0d519aff5b|F.Cu",
+        "starved_thermal|144000000|99000000|7b4bd036-f76e-4d5d-97b3-3d4d09161561|aded47f5-ece6-48c3-9558-0414fa9c2c0f|F.Cu"
+      ],
       "meta": {
         "version": 2
       },
@@ -100,7 +104,7 @@
         "tracks_crossing": "error",
         "unconnected_items": "error",
         "unresolved_variable": "error",
-        "via_dangling": "warning",
+        "via_dangling": "ignore",
         "zones_intersect": "error"
       },
       "rules": {
@@ -390,7 +394,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "mainschematic.kicad_pro",
+    "filename": "laserreceiver.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -467,24 +471,8 @@
   },
   "sheets": [
     [
-      "086318dd-19eb-4c26-88b2-e7f1a0e5d55a",
+      "5b3ae221-8bc7-4069-828f-69d1c520a91a",
       ""
-    ],
-    [
-      "de8c6f10-2835-4d43-af0d-4c06e8a28792",
-      "Displayshield"
-    ],
-    [
-      "4bbb1170-56e8-490a-b188-15375f85920c",
-      "HallSensor1"
-    ],
-    [
-      "9f2e8ec2-7565-438c-855e-9170f25d2d2f",
-      "HallSensor2"
-    ],
-    [
-      "c957c15a-75be-46b1-be3e-0ffcca22206d",
-      "LaserSender"
     ]
   ],
   "text_variables": {}
