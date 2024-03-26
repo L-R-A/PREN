@@ -485,6 +485,10 @@
     [
       "c957c15a-75be-46b1-be3e-0ffcca22206d",
       "LaserSender"
+    ],
+    [
+      "d03f4783-3768-49ef-8a1f-5cfc07c07a0e",
+      "LaserReceiver"
     ]
   ],
   "text_variables": {}
