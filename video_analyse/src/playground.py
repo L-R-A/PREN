@@ -217,7 +217,8 @@ def cube_detection(frame):
 
     # hp.Out.image_show("RESULT", frame, IN_DEBUG_MODE)
 
-
+IMAGE_HEIGHT_PX = 120
+IMAGE_WIDTH_PX = 160
 def main():
     # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
@@ -227,12 +228,15 @@ def main():
     while True: 
         image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
 
+        image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+
         frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
 
         frame = hp.Preprocess.convert_to_BGR(frame)
 
         frame = hp.Video.translate_image(frame)
+
 
         frame = frame[0:115, 10:150]
 

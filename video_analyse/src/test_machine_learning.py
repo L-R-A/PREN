@@ -30,8 +30,44 @@ BUNDLES = [
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
         'result': np.array([1, 3, 2, 2, 3, 3, 1, 0]),
         'name': '6137b988-bfa4-4aa8-8034-f91382cbd425'
-    }       
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([1, 1, 2, 2, 3, 3, 3, 0]),
+        'name': 'a2ce3e86-8590-4986-8c36-07e931b1dfaa'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([3, 1, 3, 2, 3, 0, 3, 3]),
+        'name': '958960b8-aeb3-403f-89ba-862ec773bd51'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([3, 1, 3, 2, 3, 0, 3, 3]),
+        'name': '51cd8bf3-1ea3-4bc4-aa5e-f7c117f0d3a6'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([0, 1, 3, 2, 2, 1, 3, 3]),
+        'name': '46ae10ae-bf46-46a8-81b0-a69dfdef9d51'
+    }, 
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([2, 3, 0, 1, 3, 3, 2, 1]),
+        'name': '29b57f52-82b5-422d-af4b-186e72f509b2'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([0, 1, 3, 3, 3, 3, 3, 3]),
+        'name': '635eabd2-6084-4413-bcb8-f80bd05556d4'
+    }                        
 ]
+
+
+
+
+
+
 
 
 IMAGE_HEIGHT_PX = 120
@@ -87,7 +123,7 @@ def main():
             image = np.array(image)[:, :, ::-1]
             image = image[0:115, 10:150]
             image = hp.Preprocess.start(image)
-            # image = hp.Augmentation.black_spots(image, 100)
+            image = hp.Augmentation.black_spots(image, 100)
 
             if IN_DEBUG_MODE:
                 hp.Out.image_show("Image", image, IN_DEBUG_MODE)
