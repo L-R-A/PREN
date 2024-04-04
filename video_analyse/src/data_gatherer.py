@@ -19,7 +19,7 @@ def gather_images(bundle_name, amount):
         cv2.imwrite(os.path.join('./', 'tmp', 'ressources', bundle_name, f'image{i}_2.jpg'), frame) 
 
 uuid = uuid.uuid4()
-amount = 10
+amount = 50
 
 if __name__ == '__main__':
     gather_images(str(uuid), amount)

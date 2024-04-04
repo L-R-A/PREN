@@ -217,7 +217,8 @@ def cube_detection(frame):
 
     # hp.Out.image_show("RESULT", frame, IN_DEBUG_MODE)
 
-
+IMAGE_HEIGHT_PX = 120
+IMAGE_WIDTH_PX = 160
 def main():
     # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
@@ -226,18 +227,16 @@ def main():
 
     while True: 
         image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/pos1_1.jpg"))
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/b6488696-cb4f-469b-b0d1-c1fa7866c24b/Test/Images/Image_4737_1.jpg"))
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../ressources/video_example/config_1_snippets/Image_1_1.jpg"))
-                
-        image_one = image_one.resize((160, 120))
 
-        # frame = np.array(image_one)[:, :, ::-1]
+        image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+
+        frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
 
         frame = hp.Preprocess.convert_to_BGR(frame)
 
         frame = hp.Video.translate_image(frame)
+
 
         frame = frame[0:115, 10:150]
 
@@ -248,78 +247,7 @@ def main():
         frame = hp.Preprocess.start(frame)
 
         hp.Out.image_show("Processed", frame, IN_DEBUG_MODE)
-
-
-
-        # ret, frame = hp.Video.get_next_frame(video)
-
-
-        # if not ret:
-        #     break
-
-        # blue = np.uint8([[[0,255,0]]])
-        # blue_hsv = cv2.cvtColor(blue, cv2.COLOR_BGR2HSV)  
-        # print(blue_hsv)
-        # lowerLimit = blue_hsv[0][0][0] - 10, 100, 100
-        # upperLimit = blue_hsv[0][0][0] + 10, 255, 255
-        # print(lowerLimit)
-        # print(upperLimit)
-
-        # frame = hp.Video.blur_mask(frame)
-
-
-        # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color)
-        # frame = cv2.bitwise_or(frame, frame, mask=color_mask)
-
-
-        # frame = hp.Video.grey_mask(frame)
-
-        # frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-        # hp.Out.image_show("test", frame, IN_DEBUG_MODE)
-
-
-        # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # color_mask = hp.Mask.create_color_mask(hsv, hp.HSVRanges.light_grey_color)
-        # frame = cv2.bitwise_or(frame, frame, mask=color_mask)
-
-        # hp.Out.image_show("Color Mask", frame, IN_DEBUG_MODE)
-
-        # gray_mask = hp.Video.grey_mask(frame)
-        # blur = hp.Video.blur_mask(gray_mask)
-        # threshed = hp.Video.threshold_mask(blur)
-        # eroded_mask = hp.Video.eroded_mask(threshed)
-
-        # frame = cv2.bitwise_and(frame, frame, mask=blur)
-
-        # hp.Out.image_show("Eroded", frame, IN_DEBUG_MODE)
-
-
-        # contour_enhancement(gray_mask, frame)
-
-        # contrast_stretching(gray_mask, result)
-        # gamma_correction(gray_mask, result)       
-         
-
-
-
-        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        # enhanced = clahe.apply(gray_mask)
-        # enhanced = hp.Video.contrast_improvement_mask(gray_mask)
-
-        # blur_mask = hp.Video.blur_mask(enhanced)
-        # no_gamma = hp.Video.threshold_mask(blur_mask)
-
-
-        # erode_image_processing(thresh_mask, result)
-
-
-
-
-        # calculate_object_cordinates_with_blob_detection(test, result)
-
-        # cube_detection(frame)
-
+        
         if IN_DEBUG_MODE:
 
             if FRAME_STEP_BY_STEP:
