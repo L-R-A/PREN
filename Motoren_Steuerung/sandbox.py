@@ -56,11 +56,11 @@ from threading import Thread
 run = False
 
 def current_measurement(chan0,chan1,chan2,chan3):
-    loop_time = 0.05
-    delta_t = 0
-    energy_ws = 0
-    #print_timer = 0.2
     while(True):
+        loop_time = 0.05
+        delta_t = 0
+        energy_ws = 0
+        #print_timer = 0.2
         while(run):
             current = (0.066/(2.5 - chan0.voltage))*0.33
             #current = (0.066/((chan1.voltage/2) - chan0.voltage))*0.33
