@@ -114,6 +114,7 @@ def main():
         run = True
 
         # Test ADC
+        
         #print("A0: {:.2f} V ({}) {:.3f} A".format(chan0.voltage, chan0.value, (0.066/(2.46908 - chan0.voltage))))
         #print("A0: {:.2f} V ({}) {:.3f} A".format(chan0.voltage, chan0.value, (0.066/(2.5 - chan0.voltage))*0.33)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
         #print("A1: {:.2f} V ({})".format(chan1.voltage, chan1.value))
