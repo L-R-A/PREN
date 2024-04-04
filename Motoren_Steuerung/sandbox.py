@@ -53,26 +53,28 @@ from adafruit_ads1x15.analog_in import AnalogIn
 from threading import Thread
 
 # Global Vars
-run = True
+run = False
 
 def current_measurement(chan0,chan1,chan2,chan3):
     loop_time = 0.05
     delta_t = 0
     energy_ws = 0
     #print_timer = 0.2
-    while(run):
-        current = (0.066/(2.5 - chan0.voltage))*0.33
-        #current = (0.066/((chan1.voltage/2) - chan0.voltage))*0.33
-        delta_t =  delta_t + loop_time
-        energy_ws = energy_ws + (current * chan1.voltage * delta_t)
-        energy_wh = energy_ws / 60 / 60
-        #if(delta_t >= print_timer):
-        #    print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
-        #    print_timer = print_timer + 0.2
-        print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
-        LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
-        time.sleep(loop_time)
-    LCD.clear()
+    while(True):
+        while(run):
+            current = (0.066/(2.5 - chan0.voltage))*0.33
+            #current = (0.066/((chan1.voltage/2) - chan0.voltage))*0.33
+            delta_t =  delta_t + loop_time
+            energy_ws = energy_ws + (current * chan1.voltage * delta_t)
+            energy_wh = energy_ws / 60 / 60
+            #if(delta_t >= print_timer):
+            #    print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
+            #    print_timer = print_timer + 0.2
+            print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
+            LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
+            time.sleep(loop_time)
+        
+    
 
 def main():
     # initialize i2c
@@ -97,16 +99,19 @@ def main():
     start = digitalio.DigitalInOut(board.D13)
     start.direction = digitalio.Direction.INPUT
 
+    # create Threads
+    Thread1 = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3)))
+    Thread1.start()
+
     # Endless Main Loop
     while(True):
+        global run
 
         # wait for start button
         while(not start.value):
             time.sleep(0.1)
 
-        # create Threads
-        Thread1 = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3)))
-        Thread1.start()
+        run = True
 
         # Test ADC
         #print("A0: {:.2f} V ({}) {:.3f} A".format(chan0.voltage, chan0.value, (0.066/(2.46908 - chan0.voltage))))
@@ -139,7 +144,6 @@ def main():
         #servoKit.continuous_servo[1].throttle = 0
 
         time.sleep(1)
-        global run
         run = False
 
 # RUN PROGRAM
