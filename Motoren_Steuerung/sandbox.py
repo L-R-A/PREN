@@ -118,6 +118,7 @@ def main():
         # Test Stepper
         for i in range(400):
             stepperKit.stepper1.onestep()
+            stepperKit.stepper1.onestep()
             stepperKit.stepper2.onestep()
 
         # Test Servo
@@ -140,8 +141,6 @@ def main():
         time.sleep(1)
         global run
         run = False
-
-
 
 # RUN PROGRAM
 main()
