@@ -53,13 +53,42 @@ from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import adafruit_bus_device.i2c_device as i2c_device
 
+
+i2c = busio.I2C(board.SCL, board.SDA)
+i2clist = i2c.scan()
+
+hallsens_add = 0x56
+hallsens_reg = 0x00
+hallsens = i2c_device.I2CDevice(i2c, hallsens_add)    
+data = bytearray(1)
 #initialize LCD
 LCD.init()
 
 LCD.string("CPU ready!", LCD.LCD_LINE_1)
 LCD.string("Initialize Tests", LCD.LCD_LINE_2)
 time.sleep(1)
+
+
+LCD.string("I2C Addresses:", LCD.LCD_LINE_1)
+for i2cadd in i2clist:
+    LCD.string(str(hex(i2cadd)),LCD.LCD_LINE_2)
+    time.sleep(0.6)
+LCD.string("I2C Devices:", LCD.LCD_LINE_1)
+if 0x42 in i2clist:
+    LCD.string("Motordriver",LCD.LCD_LINE_2)
+    time.sleep(0.6)
+if 0x48 in i2clist:
+    LCD.string("ADC-Module",LCD.LCD_LINE_2)
+    time.sleep(0.6)
+if 0x61 in i2clist:
+   LCD.string("Servodriver",LCD.LCD_LINE_2)
+   time.sleep(0.6)
+if 0x56 in i2clist:
+   LCD.string("Hallsensor",LCD.LCD_LINE_2)
+   time.sleep(0.6)
+ 
 
 
 # initialize shields
@@ -124,6 +153,19 @@ try:
     time.sleep(1)
 
 except: 
+    LCD.string("ERROR",LCD.LCD_LINE_2)
+
+
+LCD.string("Test Hallsens.", LCD.LCD_LINE_1)
+time.sleep(1)
+try:
+    for i in range(30):
+        hallsens.write(bytes([hallsens_reg]))  # Send the register address to read from
+        hallsens.readinto(data)   
+        LCD.string("Mag. strength: ", LCD.LCD_LINE_1)    
+        LCD.string(str(255 - data[0]), LCD.LCD_LINE_2)
+        time.sleep(0.2)
+except:
     LCD.string("ERROR",LCD.LCD_LINE_2)
 
 LCD.string("Welcome Back!",LCD.LCD_LINE_1)

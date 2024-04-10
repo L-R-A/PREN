@@ -51,9 +51,19 @@ from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from threading import Thread
+import adafruit_bus_device.i2c_device as i2c_device
+from adafruit_motor import stepper
 
 # Global Vars
 run = False
+
+# initialize i2c
+i2c = busio.I2C(board.SCL, board.SDA)
+
+hallsens_add = 0x56
+hallsens_reg = 0x00
+hallsens = i2c_device.I2CDevice(i2c, hallsens_add)    
+halldata = bytearray(1)
 
 def current_measurement(chan0,chan1,chan2,chan3):
     while(True):
@@ -71,15 +81,25 @@ def current_measurement(chan0,chan1,chan2,chan3):
             #    print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
             #    print_timer = print_timer + 0.2
             print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
+            
+
             LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
+            time.sleep(0.3)            
+            hallsens.write(bytes([hallsens_reg]))  # Send the register address to read from
+            hallsens.readinto(halldata)   
+            
+            LCD.string(str("Mag. str. : " +  str(255 - halldata[0])), LCD.LCD_LINE_2)
+
+
+
+            LCD.cursorHome()
             time.sleep(loop_time)
         
     
 
 def main():
-    # initialize i2c
-    i2c = busio.I2C(board.SCL, board.SDA)
 
+    
     # initialize ADC
     ads = ADS.ADS1015(i2c)
     ads.gain = 2/3
@@ -89,8 +109,11 @@ def main():
     chan3 = AnalogIn(ads, ADS.P3)
 
     # initialize shields
+
+
     servoKit = ServoKit(channels=16,address=0x42)
     stepperKit = MotorKit(address=0x61,i2c=board.I2C())
+
 
     # initialize LCD
     LCD.init()
@@ -98,6 +121,14 @@ def main():
     # Initialize GPIO
     start = digitalio.DigitalInOut(board.D13)
     start.direction = digitalio.Direction.INPUT
+
+    buzz = digitalio.DigitalInOut(board.D12)
+    buzz.direction = digitalio.Direction.OUTPUT
+
+    statled = digitalio.DigitalInOut(board.D6)
+    statled.direction = digitalio.Direction.OUTPUT
+
+
 
     # create Threads
     Thread1 = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3)))
@@ -110,8 +141,8 @@ def main():
         # wait for start button
         while(not start.value):
             time.sleep(0.1)
-
         run = True
+        statled.value = True
 
         # Test ADC
         
@@ -120,12 +151,19 @@ def main():
         #print("A1: {:.2f} V ({})".format(chan1.voltage, chan1.value))
         #print("A2: {:.2f} V ({})".format(chan2.voltage, chan2.value))
         #print("A3: {:.2f} V ({})".format(chan3.voltage, chan3.value))
+        
 
         # Test Stepper
-        for i in range(400):
-            stepperKit.stepper1.onestep()
-            stepperKit.stepper1.onestep()
-            stepperKit.stepper2.onestep()
+        for i in range(800):
+            stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        for i in range(800):
+            stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+        
+        stepperKit.stepper1.release()
+        stepperKit.stepper2.release()
+        
 
         # Test Servo
         servoKit.servo[0].angle = 180
@@ -143,10 +181,12 @@ def main():
         servoKit.servo[2].angle = 0
         servoKit.servo[3].angle = 0
         #servoKit.continuous_servo[1].throttle = 0
-
+        time.sleep(0.5)
+        buzz.value = True
         time.sleep(1)
+        buzz.value = False
         run = False
-
+        statled.value = False
 # RUN PROGRAM
 main()
 
