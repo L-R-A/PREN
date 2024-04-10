@@ -7,9 +7,9 @@ import cv2
 from PIL import Image
 
 
-# MODEL_PATH = "../model/v1_no_base_50000.keras"
-MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
-#MODEL_PATH = "../model/v1_no_base_10000.keras"
+MODEL_PATH = "../model/v1_no_base_50000.keras"
+# MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
+# MODEL_PATH = "../model/v1_no_base_10000.keras"
 BUNDLES = [
     {
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
@@ -60,15 +60,35 @@ BUNDLES = [
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
         'result': np.array([0, 1, 3, 3, 3, 3, 3, 3]),
         'name': '635eabd2-6084-4413-bcb8-f80bd05556d4'
-    }                        
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([3, 2, 0, 0, 3, 1, 1, 3]),
+        'name': 'dfbdb9fe-0e53-4d8e-829c-6cfd0a968bc1'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([1, 2, 0, 0, 0, 1, 1, 2]),
+        'name': '22710caf-0412-4d7a-b986-4d2e599c5efc'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([0, 0, 1, 2, 1, 2, 0, 1]),
+        'name': 'd95bcdb3-0dee-452e-9979-8268f9345d66'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([0, 0, 1, 2, 1, 2, 0, 1]),
+        'name': '91cbc884-e0cf-49fa-9c9f-1175986c4716'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([0, 0, 1, 2, 1, 2, 0, 1]),
+        'name': '4cb8d403-328f-4e44-8f50-e6b5ed25a1e2'
+    }
+
+    
 ]
-
-
-
-
-
-
-
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160

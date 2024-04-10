@@ -226,9 +226,14 @@ def main():
     i = 100
 
     while True: 
-        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
 
-        image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/temp_save/Image1_2.jpg"))
+
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9001_1.jpg"))
+
+
+        # image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
 
         frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
@@ -238,7 +243,7 @@ def main():
         frame = hp.Video.translate_image(frame)
 
 
-        frame = frame[0:115, 10:150]
+        # frame = frame[0:115, 10:150]
 
         frame = hp.Augmentation.black_spots(frame, 10)
 

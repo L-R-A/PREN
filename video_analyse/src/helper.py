@@ -35,7 +35,7 @@ class HSVRanges:
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 190]),
+            "lower_bounds": np.array([0, 0, 180]),
             "upper_bounds": np.array([255, 65 , 255])
         }
     ]
@@ -168,7 +168,7 @@ class Video:
         return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
 
 class Augmentation:
-    def black_spots(image, num_spots=5, spot_size_range=(5, 10)):
+    def black_spots(image, num_spots=5, spot_size_range=(20, 40)):
         image_copy = image.copy()
 
         for _ in range(num_spots):

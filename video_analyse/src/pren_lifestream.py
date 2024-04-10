@@ -11,7 +11,7 @@ IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
 
 FPS = 21
-RT = 15
+RT = 14
 REDUNDANCY = 100
 
 TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
@@ -21,9 +21,15 @@ def normalize_images(images):
 
 def save_frames(): # Open the camera
     frame_1 = st.Stream.getFrame(640, 480, 0, 1)[0]
-    frame_2 = st.Stream.getFrame(640, 480, 13*21, 1)[0]
+    frame_2 = st.Stream.getFrame(640, 480, RT*FPS, 1)[0]
 
-    print(frame_1)
+    while True:
+        cv2.imshow('Angle one', frame_1)
+        cv2.imshow('Angle two', frame_2)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
 
     if not os.path.exists(TEMP_PATH):    
         os.makedirs(TEMP_PATH)
@@ -92,4 +98,4 @@ def remove_tmp_folder():
 
 save_frames()
 predict_positions()
-# remove_tmp_folder()
+remove_tmp_folder()
