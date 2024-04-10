@@ -1,10 +1,11 @@
 import cv2
 import helper as hp
-import copy as cp
 import numpy as np
 import os
 import keras.api._v2.keras as keras
 import stream_image as st
+from PIL import Image
+import shutil
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
@@ -13,78 +14,67 @@ FPS = 21
 RT = 15
 REDUNDANCY = 100
 
-def open_camera_profile(ip_address, username, password, profile): # Open the camera
-    cap = cv2.VideoCapture('rtsp://' +
-        username + ':' +
-        password +
-        '@' + ip_address + '/axis-media/media.amp' + '?streamprofile=' + profile)
-    
-    if cap is None or not cap.isOpened():
-        print('Warning: unable to open video source: ', ip_address)
-        return None
-     
-    angle_one = []
-    angle_two = []
+TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
 
-    images = []
+def normalize_images(images):
+    return images / 255
 
-   
+def save_frames(): # Open the camera
+    frame_1 = st.Stream.getFrame(640, 480, 0, 1)[0]
+    frame_2 = st.Stream.getFrame(640, 480, 13*21, 1)[0]
 
-    i = 0
+    print(frame_1)
 
-    while True:
-        
-        #frame size 640x480
-        ret, frame = cap.read()
-        frame = cv2.resize(frame, (IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
-        frame = frame[0:115, 10:150]
-        copy = cp.deepcopy(frame)
-        preprocessed_frame = hp.Preprocess.start(copy)
+    if not os.path.exists(TEMP_PATH):    
+        os.makedirs(TEMP_PATH)
 
-        # Cache first frame
-        if i < REDUNDANCY:
-            angle_one.append(preprocessed_frame)
-            print("FIRST ANGLE FOUND")
-        # Amount of frames needed for half a rotation
-        if i >= FPS * RT:
-            angle_two.append(preprocessed_frame)
-            print("SECOND ANGLE FOUND")
-           
-        if i >= ((FPS * RT) + REDUNDANCY) - 1:
-            break
-
-        if not ret:
-            print('Warning: unable to read next frame')
-            break
-
-        i = i + 1
-
-
-    images = [[i1, i2] for i1, i2 in zip(angle_one, angle_two)]
-
-    images = np.array(images)
-
-    print(np.shape(images))
-
-    return images
+    cv2.imwrite(os.path.join(TEMP_PATH, f'image1_1.jpg'), frame_1) 
+    cv2.imwrite(os.path.join(TEMP_PATH, f'image1_2.jpg'), frame_2) 
+    return 
 
     
-MODEL_NAME = "v1_no_base_50000" + ".keras"
-MODEL_PATH = os.path.join("..", "tmp", "models")
+MODEL_NAME = "v2_no_base_100000" + ".keras"
+MODEL_PATH = os.path.join("..", "model")
 
 color_mapping = { 'red': 0, 'yellow': 1, 'blue': 2, '': 3 }
 label_mapping = { 0: 'red', 1: 'yellow', 2: 'blue', 3: ''}
 
-def predict_positions(image_pair):
+def predict_positions():
+
+    image_pair = []
 
     model = keras.models.load_model(os.path.join(os.path.dirname(os.path.abspath(__file__)), MODEL_PATH, MODEL_NAME))
 
+    full_path_one = os.path.join(TEMP_PATH, 'image1_1.jpg')
+    full_path_two = os.path.join(TEMP_PATH, 'image1_2.jpg')
+
+    image_one = Image.open(full_path_one)
+    image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+    image_one = np.array(image_one)[:, :, ::-1]
+    image_one = image_one[0:115, 10:150]
+    image_one = hp.Preprocess.start(image_one)
+    # image_one = hp.Augmentation.black_spots(image_one, 100)
+
+    image_two = Image.open(full_path_two)
+    image_two = image_two.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+    image_two = np.array(image_two)[:, :, ::-1]
+    image_two = image_two[0:115, 10:150]
+    image_two = hp.Preprocess.start(image_two)
+    # image_two = hp.Augmentation.black_spots(image_two, 100)
+
     while True:
-        cv2.imshow('Angle one', image_pair[0, 0])
-        cv2.imshow('Angle two', image_pair[0, 1])
+        cv2.imshow('Angle one', image_one)
+        cv2.imshow('Angle two', image_two)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+    normalized_one = normalize_images(image_one)
+    normalized_two = normalize_images(image_two)
+
+    image_pair.append([normalized_one, normalized_two]);
+
+    image_pair = np.array(image_pair)
 
     predictions = model.predict([image_pair[:, 0], image_pair[:, 1]])
 
@@ -97,46 +87,9 @@ def predict_positions(image_pair):
     print(predicted_readable)
     print("\n\n")
 
-# result = open_camera_profile('147.88.48.131', 'pren', '463997', 'pren_profile_small')
-# predict_positions(result)
+def remove_tmp_folder():
+    shutil.rmtree('/path/to/your/dir/')
 
-def stream_only (ip_address, username, password, profile):
-    cap = cv2.VideoCapture('rtsp://' +
-        username + ':' +
-        password +
-        '@' + ip_address + '/axis-media/media.amp' + '?streamprofile=' + profile)
-    
-    if cap is None or not cap.isOpened():
-        print('Warning: unable to open video source: ', ip_address)
-        return None
-     
-
-    while True:
-        ret, frame = cap.read()
-        frame = cv2.resize(frame, (IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
-        frame = frame[0:115, 10:150]
-        copy = cp.deepcopy(frame)
-        preprocessed_frame = hp.Preprocess.start(frame)
-        
-
-        while True:
-            cv2.imshow('IMAGE', preprocessed_frame)
-            cv2.imshow('IMAGE OG', copy)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-stream_only('147.88.48.131', 'pren', '463997', 'pren_profile_small')
-
-# AMOUNT = 100
-
-# for a in range(0, AMOUNT):
-#     print(a)
-#     img1 = st.Stream.getFrame(640, 480, 0)
-#     img2 = st.Stream.getFrame(640, 480, 13*21)
-
-#     # Saving the image 
-#     cv2.imwrite(f'./tmp/image9_1.jpg', img1) 
-#     cv2.imwrite(f'./tmp/image9_2.jpg', img2)
-
-        
+save_frames()
+predict_positions()
+# remove_tmp_folder()

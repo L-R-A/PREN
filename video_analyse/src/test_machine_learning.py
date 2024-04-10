@@ -8,8 +8,8 @@ from PIL import Image
 
 
 # MODEL_PATH = "../model/v1_no_base_50000.keras"
-# MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
-MODEL_PATH = "../tmp/models/v1_no_base_10000.keras"
+MODEL_PATH = "../tmp/models/v2_no_base_100000.keras"
+#MODEL_PATH = "../model/v1_no_base_10000.keras"
 BUNDLES = [
     {
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
@@ -123,7 +123,7 @@ def main():
             image = np.array(image)[:, :, ::-1]
             image = image[0:115, 10:150]
             image = hp.Preprocess.start(image)
-            image = hp.Augmentation.black_spots(image, 100)
+            # image = hp.Augmentation.black_spots(image, 100)
 
             if IN_DEBUG_MODE:
                 hp.Out.image_show("Image", image, IN_DEBUG_MODE)
