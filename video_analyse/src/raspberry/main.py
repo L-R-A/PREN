@@ -7,6 +7,7 @@ import rasp_stream as st
 from PIL import Image
 import shutil
 import sys
+import time
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
@@ -96,6 +97,8 @@ def predict_positions(image_one, image_two):
 def remove_tmp_folder():
     shutil.rmtree(TEMP_PATH)
 
+start_time = time.time()
+
 if len(sys.argv) > 1 and sys.argv[1] == "test":
     print("RUNNING IN TEST MODE\n")
 
@@ -121,3 +124,9 @@ if len(sys.argv) <= 1 or sys.argv[1] != "test":
 
     print("- REMOVING TEMP IMAGES\n")
     remove_tmp_folder()
+
+end_time = time.time()
+
+elapsed_time = end_time - start_time
+
+print("Elapsed time:", elapsed_time, "seconds")
