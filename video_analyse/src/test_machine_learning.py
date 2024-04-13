@@ -85,9 +85,17 @@ BUNDLES = [
         'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
         'result': np.array([0, 0, 1, 2, 1, 2, 0, 1]),
         'name': '4cb8d403-328f-4e44-8f50-e6b5ed25a1e2'
-    }
-
-    
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([3, 0, 1, 2, 3, 2, 0, 3]),
+        'name': 'd00b6d45-25d6-4baf-909a-fe36c1af2f90'
+    },
+    {
+        'path': os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tmp', 'ressources'),
+        'result': np.array([3, 0, 1, 2, 3, 2, 0, 3]),
+        'name': '3a83a9f6-35e6-4aef-9302-36895b42aa92'
+    }   
 ]
 
 IMAGE_HEIGHT_PX = 120

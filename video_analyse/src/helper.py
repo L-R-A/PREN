@@ -11,7 +11,7 @@ class HSVRanges:
         },
         {
             "color_name": "red",
-            "lower_bounds": np.array([160, 100, 20]),
+            "lower_bounds": np.array([160, 50, 20]),
             "upper_bounds": np.array([180, 255, 255]) 
         }
     ]
@@ -27,8 +27,8 @@ class HSVRanges:
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100, 100, 50]),
-            "upper_bounds": np.array([130, 255, 255])
+            "lower_bounds": np.array([100, 70, 50]),
+            "upper_bounds": np.array([140, 255, 255])
         },
     ]
 
@@ -83,6 +83,43 @@ class Preprocess:
 
         return cv2.bitwise_and(image, mask)
     
+
+    def remove_isolated_blue_pixels(image):
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        _, binary = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        mask = np.ones_like(image, dtype=np.uint8) * 255
+
+        for contour in contours:
+            # Minimal white area (pixles) to be not ignored
+            if cv2.contourArea(contour) > 10: 
+                cv2.drawContours(mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
+            else:
+                cv2.drawContours(mask, [contour], -1, (0, 0, 0), thickness=cv2.FILLED)
+
+        return cv2.bitwise_and(image, mask)
+    
+    def remove_isolated_blue_pixels(image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        mask = cv2.inRange(hsv, HSVRanges.blue_color[0]["lower_bounds"], HSVRanges.blue_color[0]["upper_bounds"])
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        result_mask = np.ones_like(image, dtype=np.uint8) * 255
+
+        for contour in contours:
+            # Minimal blue area (pixels) to be not ignored
+            if cv2.contourArea(contour) > 200: 
+                cv2.drawContours(result_mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
+            else:
+                cv2.drawContours(result_mask, [contour], -1, (0, 0, 0), thickness=cv2.FILLED)
+
+        return cv2.bitwise_and(image, result_mask)
+    
     def convert_to_BGR(frame):
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
@@ -97,6 +134,8 @@ class Preprocess:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
         frame = cv2.bitwise_or(frame, frame, mask=color_mask)
+
+        # return Video.blur_mask(Preprocess.remove_isolated_blue_pixels(frame))
         # return Video.blur_mask(Preprocess.remove_isolated_white_pixels(frame))
         return Video.blur_mask(frame)
 

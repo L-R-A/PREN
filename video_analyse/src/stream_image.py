@@ -1,6 +1,4 @@
 import cv2
-import copy as cp
-import helper as hp
 
 class Stream:
     IP = '147.88.48.131'
@@ -8,7 +6,7 @@ class Stream:
     PWD = '463997'
     PARAM = 'pren_profile_small'
 
-    def getFrame(width, height, f, amount=1):
+    def getFrame(width, height, f, amount=1, delay=0):
         cap = cv2.VideoCapture('rtsp://'+
         Stream.NAME+
         ':'+Stream.PWD+
@@ -27,10 +25,18 @@ class Stream:
             ret, frame = cap.read()
             c += 1
 
-        while c <= (f + (amount)):
+        found = 0
+
+        while c <= (f + (amount * delay)) and (found < amount):
             ret, frame = cap.read()
+            
+            if ((c == (f + 1)) or c % delay == 0):
+                print("FRAME FOUND: " + str(c))
+                
+                frame = cv2.resize(frame, (width, height))
+                frames.append(frame)
+                found = found + 1
+
             c += 1
-            frame = cv2.resize(frame, (width, height))
-            frames.append(frame)
-        
+
         return frames
