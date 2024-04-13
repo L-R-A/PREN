@@ -199,7 +199,6 @@ if response == True:
     )
 
 else: 
-    print("RANDOM RESULT:")
     result = np.array(['', 'red', 'yellow', 'blue', '', 'blue', 'red', ''])
 
 end_time = time.time()

@@ -25,12 +25,17 @@ def normalize_images(images):
     return images / 255
 
 def save_frames(): # Open the camera
-    print("-- GETTING FRAMES FROM LIVESTREAM")
-    frame_1 = st.Stream.getFrame(640, 480, 0, 1)[0]
-    print("--- STARTPOSITION RETRIEVED")
+    try:
+        print("-- GETTING FRAMES FROM LIVESTREAM")
+        frame_1 = st.Stream.getFrame(640, 480, 0, 1, 1)[0]
+        print("--- STARTPOSITION RETRIEVED")
 
-    frame_2 = st.Stream.getFrame(640, 480, RT*FPS, 1)[0]    
-    print("--- ENDPOSITION RETRIEVED\n")
+        frame_2 = st.Stream.getFrame(640, 480, RT*FPS, 1, 1)[0]    
+        print("--- ENDPOSITION RETRIEVED\n")
+    except Exception as e:
+        print(e)
+        print("CONNECTION FAILED: GENERATING RANDOM COMBINATION")
+        return False        
 
 
     print("-- SAVING FRAMES TO DISK")
@@ -42,7 +47,7 @@ def save_frames(): # Open the camera
  
     cv2.imwrite(os.path.join(TEMP_PATH, IMAGE_TWO), frame_2)
     print("--- SAVED SECOND IMAGE\n")
-    return 
+    return True
 
     
 MODEL_NAME = "v1_no_base_50000" + ".keras"
@@ -94,6 +99,8 @@ def predict_positions(image_one, image_two):
     print(predicted_readable)
     print("\n\n")
 
+    return predicted_readable[0]
+
 def remove_tmp_folder():
     shutil.rmtree(TEMP_PATH)
 
@@ -117,13 +124,21 @@ if len(sys.argv) <= 1 or sys.argv[1] != "test":
     print("RUNNING IN PROD MODE\n")
 
     print("- SAVING FRAMES")
-    save_frames()
+    response = save_frames()
 
-    print("- PREDICT POSITIONS\n")
-    predict_positions('image1_1.jpg', 'image1_0.jpg')
+    result = []
+
+    if response == True:
+
+        print("- PREDICT POSITIONS\n")
+        result = predict_positions('image1_1.jpg', 'image1_0.jpg')
+    else:
+        result = np.array(['', 'red', 'yellow', 'blue', '', 'blue', 'red', ''])
 
     # print("- REMOVING TEMP IMAGES\n")
     # remove_tmp_folder()
+
+    print(hp.JSON.convert_numpy_to_json(result))
 
 end_time = time.time()
 

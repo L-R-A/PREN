@@ -6,7 +6,7 @@ class Stream:
     PWD = '463997'
     PARAM = 'pren_profile_small'
 
-    def getFrame(width, height, f, amount=1, delay=0):
+    def getFrame(width, height, f, amount=1, delay=1):
         cap = cv2.VideoCapture('rtsp://'+
         Stream.NAME+
         ':'+Stream.PWD+
