@@ -5,8 +5,6 @@ import os
 import keras.api._v2.keras as keras
 import rasp_stream as st
 from PIL import Image
-import shutil
-import sys
 import time
 
 IMAGE_HEIGHT_PX = 120
