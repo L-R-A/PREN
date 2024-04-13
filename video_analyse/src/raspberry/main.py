@@ -90,7 +90,7 @@ def predict_positions(image_one, image_two):
     predicted_nummeric = np.argmax(predictions, axis=-1)
     predicted_readable = np.vectorize(label_mapping.get)(predicted_nummeric)
 
-    print("-- PREDICTION: \n")
+    print("-- PREDICTIONS: \n")
     print(predicted_readable)
     print("\n\n")
 
@@ -122,8 +122,8 @@ if len(sys.argv) <= 1 or sys.argv[1] != "test":
     print("- PREDICT POSITIONS\n")
     predict_positions('image1_1.jpg', 'image1_0.jpg')
 
-    print("- REMOVING TEMP IMAGES\n")
-    remove_tmp_folder()
+    # print("- REMOVING TEMP IMAGES\n")
+    # remove_tmp_folder()
 
 end_time = time.time()
 

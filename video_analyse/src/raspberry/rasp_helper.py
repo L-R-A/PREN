@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import json
+from datetime import datetime
 
 class HSVRanges:
     red_color = [
@@ -26,8 +28,8 @@ class HSVRanges:
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100, 100, 50]),
-            "upper_bounds": np.array([130, 255, 255])
+            "lower_bounds": np.array([100, 70, 50]),
+            "upper_bounds": np.array([140, 255, 255])
         },
     ]
 
@@ -94,3 +96,13 @@ class Mask:
 
         return mask
     
+class JSON:
+    def convert_numpy_to_json(array):
+        
+        data = {
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "config": {str(i+1): value for i, value in enumerate(array)}
+        }
+        
+        # Convert the dictionary to JSON
+        return json.dumps(data, indent=4)
