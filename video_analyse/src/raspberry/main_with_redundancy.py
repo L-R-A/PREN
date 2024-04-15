@@ -11,7 +11,7 @@ import sys
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
 FPS = 22
-RT = 13
+RT = 14
 TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
 MODEL_NAME = "model.keras"
 MODEL_PATH = os.path.join("..", "model")
@@ -62,11 +62,21 @@ def calculate_final_result_algorithmus_1(predicted_nummeric):
 
     for i in range(predicted_nummeric.shape[1]):
         values = predicted_nummeric[:, i]
-        if np.all(values == 3):
+        unique_values, counts = np.unique(values, return_counts=True)
+        counts_dict = dict(zip(unique_values, counts))
+
+        if 3 in counts_dict:
+            del counts_dict[3]
+
+        if not counts_dict:
             result[i] = 3
         else:
-            result[i] = values[np.where(values != 3)[0][0]]
+            # Get the value with maximum count
+            majority_value = max(counts_dict, key=counts_dict.get)
+            result[i] = majority_value
+
     return result
+
 
 def calculate_final_result_algorithmus_2(predicted_nummeric):
     print("--- RUNNING REDUNDANCY CHECK 2: np.argmax\n")
@@ -180,3 +190,4 @@ print("RESULT JSON: ")
 print(hp.JSON.convert_numpy_to_json(result))
 
 print("Elapsed time:", elapsed_time, "seconds")
+
