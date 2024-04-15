@@ -21,7 +21,7 @@ class Stream:
         
         frame = None
         c = 0
-        while c <= f:
+        while c < f:
             ret, frame = cap.read()
             c += 1
 
@@ -29,8 +29,7 @@ class Stream:
 
         while c <= (f + (amount * delay)) and (found < amount):
             ret, frame = cap.read()
-            
-            if ((c == (f + 1)) or c % delay == 0):
+            if ((delay == 0.0) or (c == f) or c % delay == 0):
                 print("FRAME FOUND: " + str(c))
                 
                 frame = cv2.resize(frame, (width, height))

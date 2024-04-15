@@ -11,7 +11,7 @@ import sys
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
 FPS = 22
-RT = 14
+RT = 13
 TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
 MODEL_NAME = "model.keras"
 MODEL_PATH = os.path.join("..", "model")
