@@ -6,36 +6,37 @@ import keras.api._v2.keras as keras
 import rasp_stream as st
 from PIL import Image
 import time
+import sys
 
 IMAGE_HEIGHT_PX = 120
 IMAGE_WIDTH_PX = 160
-
 FPS = 22
 RT = 14
-REDUNDANCY = 100
-
 TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
+MODEL_NAME = "model.keras"
+MODEL_PATH = os.path.join("..", "model")
+
+REDUNDANCY = 5
+DELAY_IN_SECONDS = 1
+
+if len(sys.argv) > 1:
+    REDUNDANCY = int(sys.argv[1])
+
+if len(sys.argv) > 2:
+    DELAY_IN_SECONDS = float(sys.argv[2])
+
+color_mapping = { 'red': 0, 'yellow': 1, 'blue': 2, '': 3 }
+label_mapping = { 0: 'red', 1: 'yellow', 2: 'blue', 3: ''}
 
 def normalize_images(images):
     return images / 255
 
-def save_frames(): # Open the camera
+def save_frames(redundancy, delay): # Open the camera
     try:
         print("-- GETTING FRAMES FROM LIVESTREAM")
-        frames = st.Stream.getFrame(640, 480, 0, 5, FPS * 1)
-        frame_1_1 = frames[0]
-        frame_1_2 = frames[1]
-        frame_1_3 = frames[2]
-        frame_1_4 = frames[3]
-        frame_1_5 = frames[4]
+        frames_angle_one = st.Stream.getFrame(640, 480, 0, redundancy, FPS * delay)
         print("--- STARTPOSITIONS RETRIEVED")
-
-        frames = st.Stream.getFrame(640, 480, (RT - 4) * FPS, 5, FPS * 1)
-        frame_2_1 = frames[0]
-        frame_2_2 = frames[1]
-        frame_2_3 = frames[2]
-        frame_2_4 = frames[3]
-        frame_2_5 = frames[4]
+        frames_angle_two = st.Stream.getFrame(640, 480, (RT - ((redundancy * delay) - delay)) * FPS, redundancy, FPS * delay)
         print("--- ENDPOSITION RETRIEVED\n")
 
     except:
@@ -46,34 +47,13 @@ def save_frames(): # Open the camera
     if not os.path.exists(TEMP_PATH):    
         os.makedirs(TEMP_PATH)
 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image1_1.jpg'), frame_1_1)
-    print("--- SAVED IMAGE: 1_1") 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image1_2.jpg'), frame_2_1)
-    print("--- SAVED IMAGE: 1_2") 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image2_1.jpg'), frame_1_2) 
-    print("--- SAVED IMAGE: 2_1") 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image2_2.jpg'), frame_2_2)
-    print("--- SAVED IMAGE: 2_2") 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image3_1.jpg'), frame_1_3)
-    print("--- SAVED IMAGE: 3_1")  
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image3_2.jpg'), frame_2_3) 
-    print("--- SAVED IMAGE: 3_2") 
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image4_1.jpg'), frame_1_4)
-    print("--- SAVED IMAGE: 4_1")  
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image4_2.jpg'), frame_2_4)
-    print("--- SAVED IMAGE: 4_2")    
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image5_1.jpg'), frame_1_5)
-    print("--- SAVED IMAGE: 5_1")  
-    cv2.imwrite(os.path.join(TEMP_PATH, f'image5_2.jpg'), frame_2_5)
-    print("--- SAVED IMAGE: 5_2")    
+    for i in range(0, redundancy):
+        cv2.imwrite(os.path.join(TEMP_PATH, f'image{i + 1}_1.jpg'), frames_angle_one[i])
+
+    for i in range(0, redundancy):
+        cv2.imwrite(os.path.join(TEMP_PATH, f'image{i + 1}_2.jpg'), frames_angle_two[i])   
+
     return True
-
-    
-MODEL_NAME = "v1_no_base_50000" + ".keras"
-MODEL_PATH = os.path.join("..", "model")
-
-color_mapping = { 'red': 0, 'yellow': 1, 'blue': 2, '': 3 }
-label_mapping = { 0: 'red', 1: 'yellow', 2: 'blue', 3: ''}
 
 def calculate_final_result_algorithmus_1(predicted_nummeric):
     print("--- RUNNING REDUNDANCY CHECK 1: np.all\n")
@@ -139,7 +119,7 @@ def predict_positions(image_path_one, image_path_two):
 
     predictions = model.predict([image_pair[:, 0], image_pair[:, 1]])
 
-    print("-- PREDICTION FINISHED\n")
+    print("\n")
 
     predicted_nummeric = np.argmax(predictions, axis=-1)
     predicted_readable = np.vectorize(label_mapping.get)(predicted_nummeric)
@@ -150,51 +130,43 @@ def predict_positions(image_path_one, image_path_two):
 
     result_one = calculate_final_result_algorithmus_1(predicted_nummeric)
 
-    print("ALGORITHMUS 1: FINAL RESULT: \n")
-    print(result_one)
     print("\n")
-    print("READABLE: \n")
+    print("RESULT: \n")
     print(np.vectorize(label_mapping.get)(result_one))
     print("\n\n")
 
-    result_two = calculate_final_result_algorithmus_2(predicted_nummeric)
+    # result_two = calculate_final_result_algorithmus_2(predicted_nummeric)
 
-    print("ALGORITHMUS 2: FINAL RESULT: \n")
-    print(result_two)
-    print("\n")
-    print("READABLE: \n")
-    print(np.vectorize(label_mapping.get)(result_two))
-    print("\n\n")
+    # print("ALGORITHMUS 2: FINAL RESULT: \n")
+    # print(result_two)
+    # print("\n")
+    # print("READABLE: \n")
+    # print(np.vectorize(label_mapping.get)(result_two))
+    # print("\n\n")
 
     return np.vectorize(label_mapping.get)(result_one)
 
 start_time = time.time()
 
 print("RUNNING IN PROD MODE\n")
+print(f"REDUNDANCIES: {REDUNDANCY}")
+print(f"DELAY IN SECONDS: {DELAY_IN_SECONDS}\n")
 
 print("- SAVING FRAMES")
-response = save_frames()
+response = save_frames(REDUNDANCY, DELAY_IN_SECONDS)
 
 result = []
 
 if response == True:
-    print("- PREDICT POSITIONS\n")
-    result = predict_positions(
-        [
-            "image1_1.jpg", 
-            "image2_1.jpg", 
-            "image3_1.jpg", 
-            "image4_1.jpg", 
-            "image5_1.jpg"
-        ], 
-        [
-            "image1_2.jpg",
-            "image2_2.jpg",
-            "image3_2.jpg",
-            "image4_2.jpg",
-            "image5_2.jpg"
-        ]
-    )
+    filenames_1 = []
+    filenames_2 = []
+
+    for i in range(0, REDUNDANCY):
+        filenames_1.append(f"image{i + 1}_1.jpg")
+        filenames_2.append(f"image{i + 1}_2.jpg")
+
+    print("\n- PREDICT POSITIONS\n")
+    result = predict_positions(filenames_1, filenames_2)
 
 else: 
     result = np.array(['', 'red', 'yellow', 'blue', '', 'blue', 'red', ''])
@@ -202,6 +174,8 @@ else:
 end_time = time.time()
 
 elapsed_time = end_time - start_time
+
+print("RESULT JSON: ")
 
 print(hp.JSON.convert_numpy_to_json(result))
 

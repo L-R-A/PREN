@@ -135,9 +135,6 @@ if len(sys.argv) <= 1 or sys.argv[1] != "test":
     else:
         result = np.array(['', 'red', 'yellow', 'blue', '', 'blue', 'red', ''])
 
-    # print("- REMOVING TEMP IMAGES\n")
-    # remove_tmp_folder()
-
     print(hp.JSON.convert_numpy_to_json(result))
 
 end_time = time.time()
