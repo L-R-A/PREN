@@ -66,7 +66,43 @@ hallsens_reg = 0x00
 hallsens = i2c_device.I2CDevice(i2c, hallsens_add)    
 halldata = bytearray(1)
 
-           
+def laser_cannon_deth_sentence():
+    while(True):
+        laser = digitalio.DigitalInOut(board.D18) # Laser
+        laser.direction = digitalio.Direction.OUTPUT
+        
+        while(run):
+            #current = (0.066/((chan1.voltage/2) - chan0.voltage))*0.33
+            laser.value=True
+            time.sleep(0.008)
+            laser.value=False
+            time.sleep(0.002)
+
+def laser_victim():
+    while(True):
+        lightIN = digitalio.DigitalInOut(board.D17) # Photo Resistor
+        lightIN.direction = digitalio.Direction.INPUT
+        old_val = lightIN.value
+        #timer_prev = time.time_ns()
+        sensor = False
+        while(run):
+            #timer = time.time_ns()
+            #if lightIN.value != old_val & (timer - timer_prev) < 8000000:
+            time.sleep(0.008)
+            if lightIN.value != old_val:
+                #timer_prev = timer
+                sensor = True
+                print("sensor active")
+                #time.sleep(0.01)
+            elif (lightIN.value == False) & (lightIN.value == old_val) & (sensor == False):
+                print("light pollution")
+                #sensor = False
+            elif (lightIN.value == True) & (lightIN.value == old_val):
+                print ("Endposition reached")
+                sensor = False
+            
+            old_val = lightIN.value
+            #time.sleep(0.002)          
           
     
 
@@ -92,7 +128,12 @@ def main():
     servoKit.servo[0].angle = 0
     servoKit.servo[1].angle = 0
 
-    
+    Thread_Laser = Thread(target=laser_cannon_deth_sentence,args=(()))
+    #Thread_Laser.start()
+
+    Thread_Laser_Victim = Thread(target=laser_victim,args=(()))
+    #Thread_Laser_Victim.start()
+
     ServoValue = 0
     while(True):
         if(start.value):
@@ -100,7 +141,14 @@ def main():
                 ServoValue = 174
                 servoKit.servo[0].angle = ServoValue
                 servoKit.servo[1].angle = ServoValue
-                LCD.string("UwU", LCD.LCD_LINE_1)            
+                LCD.string("UwU", LCD.LCD_LINE_1)   
+                for i in range(100):
+                    stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+                for i in range(100):
+                    stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+        
+                stepperKit.stepper1.release()
+
             else:
                 ServoValue = 0
                 servoKit.servo[0].angle = ServoValue

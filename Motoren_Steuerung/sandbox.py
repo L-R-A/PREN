@@ -86,7 +86,7 @@ def current_measurement(chan0,chan1,chan2,chan3,servoKit):
             #print("{:.3f} A {:.3f} Wh".format(current, energy_wh)) # *0.35 korrektur Offset aus Vergleich mit Messgerät
             
 
-            LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
+            #LCD.string("{:.3f} A {:.3f} Wh".format(current, energy_wh),LCD.LCD_LINE_1)
             #time.sleep(0.3)            
             hallsens.write(bytes([hallsens_reg]))  # Send the register address to read from
             hallsens.readinto(halldata)   
@@ -112,6 +112,7 @@ def laser_victim():
         lightIN = digitalio.DigitalInOut(board.D17) # Photo Resistor
         lightIN.direction = digitalio.Direction.INPUT
         old_val = lightIN.value
+        counter = 0;
         #timer_prev = time.time_ns()
         sensor = False
         while(run):
@@ -208,83 +209,27 @@ def main():
         # Test Stepper
         for i in range(800):
             stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            #stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
         for i in range(800):
             stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
-            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+            #stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
         
         stepperKit.stepper1.release()
-        stepperKit.stepper2.release()
+        #stepperKit.stepper2.release()
         
 
-        # Test Servo
-        servoKit.servo[0].angle = 180
-        servoKit.servo[1].angle = 180
-        servoKit.servo[2].angle = 180
-        servoKit.servo[3].angle = 180
-        #servoKit.continuous_servo[0].throttle = 1
-        #servoKit.continuous_servo[1].throttle = 1
-        time.sleep(1)
-        #servoKit.continuous_servo[0].throttle = -1
-        #servoKit.continuous_servo[1].throttle = -1
-        time.sleep(1)
-        servoKit.servo[0].angle = 90
-        servoKit.servo[1].angle = 90
-        servoKit.servo[2].angle = 90
-        servoKit.servo[3].angle = 90
-        
-        time.sleep(1)
-        servoKit.servo[0].angle = 25
-        servoKit.servo[1].angle = 25
-        servoKit.servo[2].angle = 25
-        servoKit.servo[3].angle = 25
- 
-        time.sleep(1)
-        servoKit.servo[0].angle = 0
-        servoKit.servo[1].angle = 0
-        servoKit.servo[2].angle = 0
-        servoKit.servo[3].angle = 0
+        # Test Servo    
+        servoKit.servo[0].angle = 174
+        servoKit.servo[1].angle = 174
+        servoKit.servo[2].angle = 174
+        servoKit.servo[3].angle = 174
 
-        for i in range(180):
-            time.sleep(0.05)
-            servoKit.servo[0].angle = i
-            servoKit.servo[1].angle = i
-            servoKit.servo[2].angle = i
-            servoKit.servo[3].angle = i
-       
-        servoKit.servo[0].angle = 0
-        servoKit.servo[1].angle = 0
-        servoKit.servo[2].angle = 0
-        servoKit.servo[3].angle = 0
         time.sleep(1)
-
-
-        for i in range(90):
-            time.sleep(0.05)
-            servoKit.servo[0].angle = 2*i
-            servoKit.servo[1].angle = 2*i
-            servoKit.servo[2].angle = 2*i
-            servoKit.servo[3].angle = 2*i
 
         servoKit.servo[0].angle = 0
         servoKit.servo[1].angle = 0
         servoKit.servo[2].angle = 0
         servoKit.servo[3].angle = 0
-        time.sleep(1)
-
-
-        for i in range(30):
-            time.sleep(0.05)
-            servoKit.servo[0].angle = 6*i
-            servoKit.servo[1].angle = 6*i
-            servoKit.servo[2].angle = 6*i
-            servoKit.servo[3].angle = 6*i
- 
-
-        servoKit.servo[0].angle = 100
-        servoKit.servo[1].angle = 100
-        servoKit.servo[2].angle = 100
-        servoKit.servo[3].angle = 100
         time.sleep(1)
 
         #servoKit.continuous_servo[1].throttle = 0
