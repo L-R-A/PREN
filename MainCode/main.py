@@ -8,7 +8,7 @@ import datetime
 import board
 import busio
 import pigpio
-#import main_with_redundancy
+from cubedetection import CubeDetection
 from displaylib import LCD_driver as LCD
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
@@ -202,9 +202,6 @@ def main():
     endPosLow = 27
     pi.set_mode(start,pigpio.INPUT)
 
-    endPosHigh = 22
-    pi.set_mode(start,pigpio.INPUT)
-
     ############################# CREATE THREADS #############################
     Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
     Thread_Display.start()
@@ -252,9 +249,13 @@ def main():
             mag_counter +=1
         magazin.release()
 
-        # raise platform
-        while(not pi.read(endPosHigh)):         
+        # reset platform
+        while(not pi.read(endPosLow)):         
+            platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+        
+        for i in range(platform_move):
             platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+
         platform.release()
         
         status = 'ready'
@@ -267,7 +268,7 @@ def main():
         # start img processing
         status = 'img_proc'
         run = True
-        #cubes = exec(open(main_with_redundancy).read())
+        cubes = CubeDetection.start()
 
         # cube drop process
         status = 'cube_drop'
