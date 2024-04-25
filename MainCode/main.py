@@ -36,6 +36,7 @@ halldata = bytearray(1)
 # Global Vars
 pi = pigpio.pi()
 run = False
+run_once = False
 lightIN = 17
 pi.set_mode(lightIN,pigpio.INPUT)
 energy_wh = 0
@@ -50,20 +51,26 @@ def display():
     global energy_wh
     global lightIN
     global status
-    run_once = False
+    global run_once
     display_run = False
     start = 0
     while(True):
         process = 0.0
-        LCD.string(str("Skogahof ready"),LCD.LCD_LINE_1)
         # check wifi connection
         wifi_ip = check_output(['hostname', '-I'])
         if not run_once:
+            LCD.string(str("Skogahof ready"),LCD.LCD_LINE_1)
             if wifi_ip is None:
                 LCD.string(str("WIFI not connected"),LCD.LCD_LINE_2)
             else:
                 LCD.string(str("IP: " + str(wifi_ip)),LCD.LCD_LINE_2)
         else:
+            if status == 'ready_again':
+                LCD.string(str("rem CUBES + Strt"),LCD.LCD_LINE_1)
+            elif status == 'preparing':
+                LCD.string(str("Preparing..."),LCD.LCD_LINE_1)
+            elif status == 'ready':
+                LCD.string(str("Skogahof ready"),LCD.LCD_LINE_1)
             LCD.string(str("t: " + str(round(prev_time,1)) + "s E: " + str(round(prev_energy,1)) + "Wh"),LCD.LCD_LINE_2)
         display_run = False
         
@@ -192,6 +199,12 @@ def main():
     statled = 6
     pi.set_mode(statled,pigpio.OUTPUT)
 
+    endPosLow = 27
+    pi.set_mode(start,pigpio.INPUT)
+
+    endPosHigh = 22
+    pi.set_mode(start,pigpio.INPUT)
+
     ############################# CREATE THREADS #############################
     Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
     Thread_Display.start()
@@ -211,6 +224,7 @@ def main():
         global end_position
         global status
         global cube_storage
+        global run_once
         end_position = False
         status = 'idle'
         cubes = ["","","","","","","",""] # yellow, red, blue
@@ -218,13 +232,32 @@ def main():
         # Default Positon Cube Push Mechanism    
         servo_push1.angle = 0
         servo_push2.angle = 0
+
+        # warn to remove cubes
+        if run_once:
+            while(not pi.read(start)):
+                status = 'ready_again'
+                time.sleep(0.01)
+        
+        status = 'preparing'
+
+        # turn to start position with magazin
+        hall_val = 255 - halldata[0]
+        mag_counter = 0
+        while hall_val < 200:
+            if mag_counter < 200:
+                magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            else:
+                magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            mag_counter +=1
         magazin.release()
+
         # raise platform
-        while(end_position == False): 
-            for i in range(platform_move):
-                platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            platform.release()
+        while(not pi.read(endPosHigh)):         
+            platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
         platform.release()
+        
+        status = 'ready'
 
         ################## START RUN ##################
         while(not pi.read(start)):
@@ -305,10 +338,11 @@ def main():
             magazin.release()
 
         status = 'lower_plattform'
-        while(end_position == False): 
-            for i in range(platform_move):
-                platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
-            platform.release()
+        while(not pi.read(endPosLow)):
+            if end_position == True:
+                break    
+            platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+        platform.release()
         
         status = 'cube_center'
         # When Platform is low enough -> Push cubes together
