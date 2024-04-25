@@ -41,7 +41,7 @@ pi.set_mode(lightIN,pigpio.INPUT)
 energy_wh = 0
 end_position = False
 status = 'idle'
-
+cube_storage = ["yellow","red","blue"] # 3 = dummy
 
 def display():
     global energy_wh
@@ -160,6 +160,11 @@ def main():
     except:
         LCD.string(str("I2C Err: SERVO"),LCD.LCD_LINE_2)
         time.sleep(3)
+    servo_push1 = servoKit.servo[0]
+    servo_push2 = servoKit.servo[1]
+    servo_yellow = servoKit.servo[2]
+    servo_red = servoKit.servo[3]
+    servo_blue = servoKit.servo[4]
     try:
         stepperKit = MotorKit(address=0x61,i2c=board.I2C())
     except:
@@ -195,13 +200,15 @@ def main():
         global run
         global end_position
         global status
+        global cube_storage
         end_position = False
         status = 'idle'
         cubes = ["","","","","","","",""] # yellow, red, blue
+        drop_char = 0 # 4 bits to indicate droping: NAV, blue, red, yellow -> 0001 = yellow drop
 
         # Default Positon Cube Push Mechanism    
-        servoKit.servo[0].angle = 0
-        servoKit.servo[1].angle = 0
+        servo_push1.angle = 0
+        servo_push2.angle = 0
         stepperKit.stepper1.release()
         stepperKit.stepper2.release()
 
@@ -218,6 +225,21 @@ def main():
         # cube drop process
         status = 'cube_drop'
 
+        # defined cube storages in global list: 0 = yellow, 1 = red, 2 = blue, 3 = dummy
+        if cube_storage[0] == cubes [0]:
+            TODO=0
+            
+
+
+
+        """
+        Die Werte 1-8 bezeichnen die Positionen eines Würfels oder einer leeren Stelle in der Konfiguration.
+        Die Position 1 spezifiziert die Stelle die auf dem weissen Sektor des Drehtellers, liegt die Positionen 2,
+        3, 4 die 3 anderen auf dem Teller liegenden Sektoren im Gegenuhrzeigersinn. Die Positionen 5, 6, 7, 8
+        sind diejenigen auf dem 2 Level, i.e. auf einem darunterliegenden Würfel. Ist an der entsprechenden
+        Stelle kein Würfel, so ist die Position leer. Position 5 liegt auf 1, 6 auf 2, 7 auf 3 und 8 auf 4.
+        """
+        
 
         """
         for i in range(500):
@@ -246,11 +268,11 @@ def main():
         
         status = 'cube_center'
         # When Platform is low enough -> Push cubes together
-        servoKit.servo[0].angle = 174
-        servoKit.servo[1].angle = 174    
+        servo_push1.angle = 174
+        servo_push2.angle = 174    
         time.sleep(1)    
-        servoKit.servo[0].angle = 0
-        servoKit.servo[1].angle = 0
+        servo_push1.angle = 0
+        servo_push2.angle = 0
 
         time.sleep(1)
 
