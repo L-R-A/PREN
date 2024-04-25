@@ -311,7 +311,7 @@ def main():
             magazin.release()
 
         # turn backward
-        for i in range(3,0,-1):
+        for i in range(7,4,-1):
             if cube_storage[0] == cubes[i]:
                 servo_yellow.angle = release_cube
             if i <= 2:
