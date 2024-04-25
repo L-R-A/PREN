@@ -40,11 +40,10 @@
 #---------------------------------------------------------
 
 
-from displaylib import LCD_driver as LCD
-import time
 import time
 #import datetime
 import board
+import pwmio
 import busio
 import digitalio
 #import RPi.GPIO as GPIO
@@ -53,8 +52,9 @@ from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+from threading import Thread
 import adafruit_bus_device.i2c_device as i2c_device
-
+from adafruit_motor import stepper
 
 i2c = busio.I2C(board.SCL, board.SDA)
 i2clist = i2c.scan()
@@ -120,11 +120,13 @@ try:
     LCD.string("...",LCD.LCD_LINE_2)
 
     # Test Stepper
-    for i in range(400):
-            stepperKit.stepper1.onestep()
-            stepperKit.stepper2.onestep()
 
+    for i in range(800):
+        stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+    
     LCD.string("Success!",LCD.LCD_LINE_2)
+
     time.sleep(1)
 
 
@@ -133,21 +135,16 @@ try:
 
 
     # Test Servo
-    servoKit.servo[0].angle = 180
-    servoKit.servo[1].angle = 180
-    servoKit.servo[2].angle = 180
-    servoKit.servo[3].angle = 180
-    #servoKit.continuous_servo[0].throttle = 1
-    #servoKit.continuous_servo[1].throttle = 1
-    time.sleep(1)
-    #servoKit.continuous_servo[0].throttle = -1
-    #servoKit.continuous_servo[1].throttle = -1
-    time.sleep(1)
+    servoKit.servo[0].angle = 174
+    servoKit.servo[1].angle = 174
+    time.sleep(0.6)
     servoKit.servo[0].angle = 0
     servoKit.servo[1].angle = 0
-    servoKit.servo[2].angle = 0
-    servoKit.servo[3].angle = 0
-    #servoKit.continuous_servo[1].throttle = 0
+    for i in range(800):
+        stepperKit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+        stepperKit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+
+
     time.sleep(1)
     LCD.string("Success!",LCD.LCD_LINE_2)
     time.sleep(1)

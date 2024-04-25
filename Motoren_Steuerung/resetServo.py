@@ -111,7 +111,7 @@ def main():
     servoKit = ServoKit(channels=16,address=0x42)
     stepperKit = MotorKit(address=0x61,i2c=board.I2C())
     servoKit.servo[4]._pwm_out
-
+        
     # initialize LCD
     LCD.init()
 

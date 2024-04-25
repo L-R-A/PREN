@@ -207,36 +207,36 @@ def main():
         
 
         # Test Stepper
-        for i in range(800):
+        for i in range(1000):
             stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            #stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-        for i in range(800):
-            stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
-            #stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        for i in range(1000):
+            stepperKit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+            stepperKit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         
         stepperKit.stepper1.release()
-        #stepperKit.stepper2.release()
+        stepperKit.stepper2.release()
         
+        servoKit.servo[0].angle = 150
+        servoKit.servo[1].angle = 150
+        # Test Servo   
+        for i in range(27):
+            servoKit.servo[0].angle = 150 + i
+            servoKit.servo[1].angle = 150 + i
+            time.sleep(0.1)
 
-        # Test Servo    
-        servoKit.servo[0].angle = 174
-        servoKit.servo[1].angle = 174
-        servoKit.servo[2].angle = 174
-        servoKit.servo[3].angle = 174
-
-        time.sleep(1)
+        time.sleep(0.3)
 
         servoKit.servo[0].angle = 0
         servoKit.servo[1].angle = 0
-        servoKit.servo[2].angle = 0
-        servoKit.servo[3].angle = 0
         time.sleep(1)
 
+        
         #servoKit.continuous_servo[1].throttle = 0
         time.sleep(0.5)
-        #buzz.value = True
-        #time.sleep(1)
-        #buzz.value = False
+        buzz.value = True
+        time.sleep(0.12)
+        buzz.value = False
         run = False
         statled.value = False
 # RUN PROGRAM
