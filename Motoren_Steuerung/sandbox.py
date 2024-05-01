@@ -173,24 +173,27 @@ def main():
     statled = digitalio.DigitalInOut(board.D6)
     statled.direction = digitalio.Direction.OUTPUT
 
-
+    ends = digitalio.DigitalInOut(board.D27)
+    ends.direction = digitalio.Direction.INPUT 
 
     # create Threads
     Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
     Thread_Display.start()
 
-    Thread_Laser = Thread(target=laser_cannon_deth_sentence,args=(()))
-    Thread_Laser.start()
+    #Thread_Laser = Thread(target=laser_cannon_deth_sentence,args=(()))
+    #Thread_Laser.start()
 
-    Thread_Laser_Victim = Thread(target=laser_victim,args=(()))
-    Thread_Laser_Victim.start()
+    #Thread_Laser_Victim = Thread(target=laser_victim,args=(()))
+    #Thread_Laser_Victim.start()
 
 
 
     # Endless Main Loop
     while(True):
         global run
-
+        servoKit.servo[0].angle = 0
+        servoKit.servo[1].angle = 0
+ 
         # wait for start button
         while(not start.value):
             time.sleep(0.1)
@@ -204,14 +207,27 @@ def main():
         #print("A1: {:.2f} V ({})".format(chan1.voltage, chan1.value))
         #print("A2: {:.2f} V ({})".format(chan2.voltage, chan2.value))
         #print("A3: {:.2f} V ({})".format(chan3.voltage, chan3.value))
-        
-
-        # Test Stepper
-        for i in range(1000):
-            stepperKit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        while(not ends.value):
+            stepperKit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+            print(ends.value)
+        time.sleep(0.2
+                )
+        for i in range(300):
             stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-        for i in range(1000):
-            stepperKit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+
+        time.sleep(0.2)
+        while(not ends. value):
+            stepperKit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.MICROSTEP)
+        
+        time.sleep(0.2)
+        for i in range(300):
+            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.MICROSTEP)
+
+        time.sleep(0.5)
+        # Test Stepper
+        for i in range(3000):
+            stepperKit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        for i in range(600):
             stepperKit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         
         stepperKit.stepper1.release()

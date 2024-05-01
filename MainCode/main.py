@@ -8,7 +8,7 @@ import datetime
 import board
 import busio
 import pigpio
-from cubedetection import CubeDetection
+#from cubedetection import CubeDetection
 from displaylib import LCD_driver as LCD
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
@@ -35,6 +35,7 @@ halldata = bytearray(1)
 
 # Global Vars
 pi = pigpio.pi()
+#pi = pigpio.pi()
 run = False
 run_once = False
 lightIN = 17
@@ -92,15 +93,11 @@ def display():
                 LCD.string(str("LOWER PLATFORM"),LCD.LCD_LINE_1)
             if status == 'cube_center':
                 LCD.string(str("CENTRALIZE CUBES"),LCD.LCD_LINE_1)
-            if status == 'fiinished':
-                while(not pi.read(start)):
-                    LCD.string(str("FINISHED"),LCD.LCD_LINE_1)
-                    LCD.string(str(round(process,1) + "% " + str(round(end - start),0) + "s " + str(round(energy_wh,2)) + "Wh"),LCD.LCD_LINE_2)
                 
             # update status on display line 2
-            LCD.string(str(round(process,1) + "% " + str(round(end - start),0) + "s " + str(round(energy_wh,2)) + "Wh"),LCD.LCD_LINE_2)
+            LCD.string(str(str(round(process,1)) + "% " + str(round(end - start),1) + "s " + str(round(energy_wh,2)) + "Wh"),LCD.LCD_LINE_2)
             if process < 100.0:
-                process += 0.15
+                process += 0.8
             prev_energy = energy_wh
             end = time.time()
             time.sleep(0.2) # run loop delay time
@@ -199,8 +196,8 @@ def main():
     statled = 6
     pi.set_mode(statled,pigpio.OUTPUT)
 
-    endPosLow = 27
-    pi.set_mode(start,pigpio.INPUT)
+    endPosLow = 22
+    pi.set_mode(endPosLow,pigpio.INPUT)
 
     ############################# CREATE THREADS #############################
     Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
@@ -244,13 +241,13 @@ def main():
         while hall_val < 200:
             if mag_counter < 200:
                 magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            else:
+            elif mag_counter < 600:
                 magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
             mag_counter +=1
         magazin.release()
 
         # reset platform
-        while(not pi.read(endPosLow)):         
+        while(pi.read(endPosLow)):         
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         
         for i in range(platform_move):
@@ -268,7 +265,7 @@ def main():
         # start img processing
         status = 'img_proc'
         run = True
-        cubes = CubeDetection.start()
+        #cubes = CubeDetection.start()
 
         # cube drop process
         status = 'cube_drop'
@@ -339,7 +336,7 @@ def main():
             magazin.release()
 
         status = 'lower_plattform'
-        while(not pi.read(endPosLow)):
+        while(pi.read(endPosLow)):
             if end_position == True:
                 break    
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
