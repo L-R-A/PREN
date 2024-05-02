@@ -20,7 +20,7 @@ from adafruit_motor import stepper
 from subprocess import check_output
 
 # initialize LCD
-LCD.init() # TODO: exception handling
+LCD.init() # TODO: exception handltime.sleep(0.5)
 
 # initialize i2c
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -44,9 +44,9 @@ energy_wh = 0
 end_position = False # for platform -> laser detection
 status = 'idle' # for status update and progress on display 
 cube_storage = ["yellow","red","blue"] # 3 = dummy
-release_cube = 90 # angle for cube storage to release cube
-turn_magazine = 100 # steps for stepper to turn 90°
-platform_move = 100 # steps for platform to move up or down
+release_cube = 180 # angle for cube storage to release cube
+turn_magazine = 145 # steps for stepper to turn 90°
+platform_move = 2700 # steps for platform to move up or down
 
 def display():
     global energy_wh
@@ -201,13 +201,13 @@ def main():
 
     ############################# CREATE THREADS #############################
     Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
-    Thread_Display.start()
+    #Thread_Display.start()
 
     Thread_Laser = Thread(target=laser_cannon_deth_sentence,args=(()))
-    Thread_Laser.start()
+    #Thread_Laser.start()
 
     Thread_Laser_Victim = Thread(target=laser_victim,args=(()))
-    Thread_Laser_Victim.start()
+    #Thread_Laser_Victim.start()
 
     Thread_Display = Thread(target=display,args=(()))
     Thread_Display.start()
@@ -247,7 +247,7 @@ def main():
         magazin.release()
 
         # reset platform
-        while(pi.read(endPosLow)):         
+        while(pi.read(endPosLow)):        
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         
         for i in range(platform_move):
@@ -266,7 +266,11 @@ def main():
         status = 'img_proc'
         run = True
         #cubes = CubeDetection.start()
+        
 
+         
+
+        print(cubes)
         # cube drop process
         status = 'cube_drop'
 
@@ -334,18 +338,59 @@ def main():
             for i in range(turn_magazine):
                 magazin.onestep(direction=stepper.BACKWARD, style = stepper.DOUBLE)
             magazin.release()
+        for i in range(2):
+            turnrange = 180
+            if(i==0):
+                turnrange=160
+            servo_yellow.angle = turnrange
+            servo_red.angle = turnrange
+            servo_blue.angle = turnrange
+            time.sleep(0.5)
+            servo_yellow.angle = 0
+            servo_red.angle = 0
+            servo_blue.angle = 0
+            time.sleep(0.5)
+            if(i==1):
+                break
+            for j in range(turn_magazine):
+                magazin.onestep(direction=stepper.BACKWARD, style = stepper.DOUBLE)
+        
+        
+        for i in range(turn_magazine):
+            magazin.onestep(direction=stepper.FORWARD, style = stepper.DOUBLE)
+        magazin.release()
+
+
+        servo_yellow.angle = 0
+        servo_red.angle = 0
+        servo_blue.angle = 0
+
 
         status = 'lower_plattform'
+        
+        for i in range(platform_move-150):
+            platform.onestep(direction=stepper.BACKWARD, style = stepper.DOUBLE)
+        magazin.release()
+
+
+        
         while(pi.read(endPosLow)):
             if end_position == True:
                 break    
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         platform.release()
-        
+       
+
+
         status = 'cube_center'
         # When Platform is low enough -> Push cubes together
-        servo_push1.angle = 174
-        servo_push2.angle = 174    
+        servo_push1.angle = 155
+        servo_push2.angle = 155
+        for i in range(25):
+            servo_push1.angle = 155+i
+            servo_push2.angle = 155+i
+            time.sleep(0.15)
+   
         time.sleep(1)    
         servo_push1.angle = 0
         servo_push2.angle = 0
