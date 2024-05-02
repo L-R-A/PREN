@@ -4,17 +4,16 @@
 
 import time
 #import timeit
-import datetime
 import board
 import busio
-import pigpio
+import digitalio
 #from cubedetection import CubeDetection
 from displaylib import LCD_driver as LCD
 from adafruit_servokit import ServoKit
 from adafruit_motorkit import MotorKit
 import adafruit_ads1x15.ads1015 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-from threading import Thread
+from multiprocessing import Process
 import adafruit_bus_device.i2c_device as i2c_device
 from adafruit_motor import stepper
 from subprocess import check_output
@@ -38,8 +37,8 @@ pi = pigpio.pi()
 #pi = pigpio.pi()
 run = False
 run_once = False
-lightIN = 17
-pi.set_mode(lightIN,pigpio.INPUT)
+lightIN = digitalio.DigitalInOut(board.D17) # Photo Resistor
+lightIN.direction = digitalio.Direction.INPUT
 energy_wh = 0
 end_position = False # for platform -> laser detection
 status = 'idle' # for status update and progress on display 
@@ -125,31 +124,31 @@ def current_measurement(chan0,chan1,chan2,chan3,servoKit):
 
 def laser_cannon_deth_sentence():
     while(True):
-        laser = 18
-        pi.set_mode(laser,pigpio.OUTPUT)
+        laser = digitalio.DigitalInOut(board.D18) # Laser
+        laser.direction = digitalio.Direction.OUTPUT
         
         while(run):
-            pi.write(laser,1)
+            laser.value=True
             time.sleep(0.008)
-            pi.write(laser,0)
+            laser.value=False
             time.sleep(0.002)
 
 def laser_victim():
     while(True):
         global end_position
-        old_val = pi.read(lightIN)
+        old_val = lightIN.value
         sensor = False
         while(run):
             time.sleep(0.008)
-            if (pi.read(lightIN) != old_val) & (pi.read(lightIN) == False):
+            if (lightIN.value != old_val) & (lightIN.value == False):
                 sensor = True
                 end_position = False
                 #print("sensor active")
-            elif (pi.read(lightIN) == True) & (pi.read(lightIN) == old_val):
+            elif (lightIN.value == True) & (lightIN.value == old_val):
                 #print ("Endposition reached")
                 sensor = False
                 end_position = True
-            old_val = pi.read(lightIN)
+            old_val = lightIN.value
 
 def main():
     ################################# MAIN INIT #################################
@@ -187,31 +186,30 @@ def main():
     #servoKit.servo[4]._pwm_out
 
     # Initialize GPIO
-    start = 13
-    pi.set_mode(start,pigpio.INPUT)
+    start = digitalio.DigitalInOut(board.D13)
+    start.direction = digitalio.Direction.INPUT
 
-    buzz = 12
-    pi.set_mode(buzz,pigpio.OUTPUT)
+    buzz = digitalio.DigitalInOut(board.D12)
+    buzz.direction = digitalio.Direction.OUTPUT
 
-    statled = 6
-    pi.set_mode(statled,pigpio.OUTPUT)
+    statled = digitalio.DigitalInOut(board.D6)
+    statled.direction = digitalio.Direction.OUTPUT
 
-    endPosLow = 22
-    pi.set_mode(endPosLow,pigpio.INPUT)
+    endPosLow = digitalio.DigitalInOut(board.D22)
+    endPosLow.direction = digitalio.Direction.INPUT 
 
     ############################# CREATE THREADS #############################
-    Thread_Display = Thread(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
-    #Thread_Display.start()
+    Process_Display = Process(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
+    Process_Display.start()
 
-    Thread_Laser = Thread(target=laser_cannon_deth_sentence,args=(()))
-    #Thread_Laser.start()
+    Process_Laser = Process(target=laser_cannon_deth_sentence,args=(()))
+    Process_Laser.start()
 
-    Thread_Laser_Victim = Thread(target=laser_victim,args=(()))
-    #Thread_Laser_Victim.start()
+    Process_Laser_Victim = Process(target=laser_victim,args=(()))
+    Process_Laser_Victim.start()
 
-    Thread_Display = Thread(target=display,args=(()))
-    Thread_Display.start()
-
+    Process_Display = Process(target=display,args=(()))
+    Process_Display.start()
     ############################### MAIN LOOP ###############################
     while(True):
         global run
@@ -229,7 +227,7 @@ def main():
 
         # warn to remove cubes
         if run_once:
-            while(not pi.read(start)):
+            while(not start.value):
                 status = 'ready_again'
                 time.sleep(0.01)
         
@@ -247,7 +245,7 @@ def main():
         magazin.release()
 
         # reset platform
-        while(pi.read(endPosLow)):        
+        while(endPosLow.value):        
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
         
         for i in range(platform_move):
@@ -258,9 +256,9 @@ def main():
         status = 'ready'
 
         ################## START RUN ##################
-        while(not pi.read(start)):
+        while(not start.value):
             time.sleep(0.01)
-        pi.write(statled,1)
+        statled.value = True
 
         # start img processing
         status = 'img_proc'
@@ -338,6 +336,8 @@ def main():
             for i in range(turn_magazine):
                 magazin.onestep(direction=stepper.BACKWARD, style = stepper.DOUBLE)
             magazin.release()
+
+            
         for i in range(2):
             turnrange = 180
             if(i==0):
@@ -374,7 +374,7 @@ def main():
 
 
         
-        while(pi.read(endPosLow)):
+        while(endPosLow.value):
             if end_position == True:
                 break    
             platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
@@ -397,11 +397,11 @@ def main():
 
         status = 'finished'
         # Accoustic Signal
-        #pi.write(buzz,1)
+        #buzz.value = True
         time.sleep(0.2)
-        pi.write(buzz,0)
+        buzz.value = False
         run = False
-        pi.write(statled,0)
+        statled.value = False
 ############################### END MAIN ###############################
 
 # RUN PROGRAM
