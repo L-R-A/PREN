@@ -168,6 +168,6 @@ class CubeDetection:
         return result.tolist()
 
 
-result = CubeDetection.start()
+# result = CubeDetection.start()
 
-print(result)
+# print(result)

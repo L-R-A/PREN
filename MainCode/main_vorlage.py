@@ -17,8 +17,20 @@ from multiprocessing import Process
 import adafruit_bus_device.i2c_device as i2c_device
 from adafruit_motor import stepper
 from subprocess import check_output
-#from adc import adc as adc
-from motors import motors
+
+# initialize LCD
+LCD.init() # TODO: exception handltime.sleep(0.5)
+
+# initialize i2c
+i2c = busio.I2C(board.SCL, board.SDA)
+hallsens_add = 0x56
+hallsens_reg = 0x00
+try:
+    hallsens = i2c_device.I2CDevice(i2c, hallsens_add)
+except:
+    LCD.string(str("I2C Err: HALL"),LCD.LCD_LINE_2)
+    time.sleep(3)
+halldata = bytearray(1)
 
 # Global Vars
 run = False
@@ -29,10 +41,154 @@ energy_wh = 0
 end_position = False # for platform -> laser detection
 status = 'idle' # for status update and progress on display 
 cube_storage = ["yellow","red","blue"] # 3 = dummy
+release_cube = 180 # angle for cube storage to release cube
+turn_magazine = 145 # steps for stepper to turn 90°
+platform_move = 2700 # steps for platform to move up or down
 
+def display():
+    display_run = False
+    start = 0
+
+    while(True):
+        process = 0.0
+        # check wifi connection
+        wifi_ip = check_output(['hostname', '-I'])
+        print(status)
+        print(run)
+
+        if not run_once:
+            print(status)
+            print(run)
+
+
+            LCD.string(str("Skogahof ready"),LCD.LCD_LINE_1)
+            if wifi_ip is None:
+                LCD.string(str("WIFI not connected"),LCD.LCD_LINE_2)
+            else:
+                LCD.string(str("IP: " + str(wifi_ip)),LCD.LCD_LINE_2)
+        else:
+            print(status)
+
+            if status == 'ready_again':
+                LCD.string(str("rem CUBES + Strt"),LCD.LCD_LINE_1)
+            elif status == 'preparing':
+                LCD.string(str("Preparing..."),LCD.LCD_LINE_1)
+            elif status == 'ready':
+                LCD.string(str("Skogahof ready"),LCD.LCD_LINE_1)
+            LCD.string(str("t: " + str(round(prev_time,1)) + "s E: " + str(round(prev_energy,1)) + "Wh"),LCD.LCD_LINE_2)
+        display_run = False
+        
+        while(run):
+            print("RUN MODE")
+            # init run
+            run_once = True
+            if display_run == False:
+                start = time.time()
+                prev_time = 0
+                prev_energy = 0
+                display_run = True
+
+            # update status on display line 1
+            if status == 'img_proc':
+                LCD.string(str("IMG PROCESSING"),LCD.LCD_LINE_1)
+            if status == 'cube_drop':
+                LCD.string(str("PLACING CUBES"),LCD.LCD_LINE_1)
+            if status == 'lower_plattform':
+                LCD.string(str("LOWER PLATFORM"),LCD.LCD_LINE_1)
+            if status == 'cube_center':
+                LCD.string(str("CENTRALIZE CUBES"),LCD.LCD_LINE_1)
+                
+            # update status on display line 2
+            LCD.string(str(str(round(process,1)) + "% " + str(round(end - start),1) + "s " + str(round(energy_wh,2)) + "Wh"),LCD.LCD_LINE_2)
+            if process < 100.0:
+                process += 0.8
+            prev_energy = energy_wh
+            end = time.time()
+            time.sleep(0.2) # run loop delay time
+        
+        # time claculation
+        if run_once:
+            prev_time = end - start
+        time.sleep(0.5) # idle delay
+    
+
+def current_measurement(chan0,chan1,chan2,chan3,servoKit):
+    while(True):
+        global energy_wh
+        loop_time = 0.05
+        delta_t = 0
+        energy_ws = 0
+        while(run):
+            current = (0.066/(2.5 - chan0.voltage))*0.33
+            delta_t =  delta_t + loop_time
+            energy_ws = energy_ws + (current * chan1.voltage * delta_t)
+            energy_wh = energy_ws / 60 / 60
+            hallsens.write(bytes([hallsens_reg]))  # Send the register address to read from
+            hallsens.readinto(halldata) 
+            time.sleep(loop_time)  
+
+def laser_cannon_deth_sentence():
+    while(True):
+        laser = digitalio.DigitalInOut(board.D18) # Laser
+        laser.direction = digitalio.Direction.OUTPUT
+        
+        while(run):
+            laser.value=True
+            time.sleep(0.008)
+            laser.value=False
+            time.sleep(0.002)
+
+def laser_victim():
+    while(True):
+        global end_position
+        old_val = lightIN.value
+        sensor = False
+        while(run):
+            time.sleep(0.008)
+            if (lightIN.value != old_val) & (lightIN.value == False):
+                sensor = True
+                end_position = False
+                #print("sensor active")
+            elif (lightIN.value == True) & (lightIN.value == old_val):
+                #print ("Endposition reached")
+                sensor = False
+                end_position = True
+            old_val = lightIN.value
 
 def main():
     ################################# MAIN INIT #################################
+    # initialize ADC
+    try:
+        ads = ADS.ADS1015(i2c)
+    except:
+        LCD.string(str("I2C Err: ADC"),LCD.LCD_LINE_2)
+        time.sleep(3)
+    ads.gain = 2/3
+    chan0 = AnalogIn(ads, ADS.P0)
+    chan1 = AnalogIn(ads, ADS.P1)
+    chan2 = AnalogIn(ads, ADS.P2)
+    chan3 = AnalogIn(ads, ADS.P3)
+    # initialize shields
+    try:
+        servoKit = ServoKit(channels=16,address=0x42)
+    except:
+        LCD.string(str("I2C Err: SERVO"),LCD.LCD_LINE_2)
+        time.sleep(3)
+    servo_push1 = servoKit.servo[0]
+    servo_push2 = servoKit.servo[1]
+    servo_yellow = servoKit.servo[2]
+    servo_red = servoKit.servo[3]
+    servo_blue = servoKit.servo[4]
+    try:
+        stepperKit = MotorKit(address=0x61,i2c=board.I2C())
+    except:
+        LCD.string(str("I2C Err: STEPPER"),LCD.LCD_LINE_2)
+        time.sleep(3)
+    magazin =  stepperKit.stepper1
+    platform = stepperKit.stepper2
+    
+    #servoKit.servo[4]._pwm_out
+
     # Initialize GPIO
     start = digitalio.DigitalInOut(board.D13)
     start.direction = digitalio.Direction.INPUT
@@ -43,6 +199,21 @@ def main():
     statled = digitalio.DigitalInOut(board.D6)
     statled.direction = digitalio.Direction.OUTPUT
 
+    endPosLow = digitalio.DigitalInOut(board.D27)
+    endPosLow.direction = digitalio.Direction.INPUT 
+
+    ############################# CREATE THREADS #############################
+    Process_Display = Process(target=current_measurement,args=((chan0,chan1,chan2,chan3,servoKit)))
+    Process_Display.start()
+
+    Process_Laser = Process(target=laser_cannon_deth_sentence,args=(()))
+    Process_Laser.start()
+
+    Process_Laser_Victim = Process(target=laser_victim,args=(()))
+    Process_Laser_Victim.start()
+
+    Process_Display = Process(target=display,args=())
+    Process_Display.start()
     ############################### MAIN LOOP ###############################
     while(True):
         global run 
@@ -52,7 +223,9 @@ def main():
         status = 'idle'
         cubes = ["","","","","","","",""] # yellow, red, blue
 
-
+        # Default Positon Cube Push Mechanism    
+        servo_push1.angle = 0
+        servo_push2.angle = 0
 
         # warn to remove cubes
         if run_once:
@@ -62,11 +235,25 @@ def main():
         
         status = 'preparing'
 
-        motor.start_position()
-        while True:
-            time.sleep(1)
+        # turn to start position with magazin
+        hall_val = 255 - halldata[0]
+        mag_counter = 0
+        while hall_val < 200:
+            if mag_counter < 200:
+                magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            elif mag_counter < 600:
+                magazin.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            mag_counter +=1
+        magazin.release()
 
+        # reset platform
+        while(not endPosLow.value):        
+            platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+        
+        for i in range(platform_move):
+            platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
 
+        platform.release()
         
         status = 'ready'
 
