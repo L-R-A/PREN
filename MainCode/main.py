@@ -53,7 +53,7 @@ def main():
         cubes = ["","","","","","","",""] # yellow, red, blue
 
 
-
+        """
         # warn to remove cubes
         if run_once:
             while(not start.value):
@@ -61,8 +61,8 @@ def main():
                 time.sleep(0.01)
         
         status = 'preparing'
-
-        motor.start_position()
+        """
+        motors.start_position()
         while True:
             time.sleep(1)
 

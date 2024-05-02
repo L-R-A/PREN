@@ -13,7 +13,7 @@ from multiprocessing import Process
 import adafruit_bus_device.i2c_device as i2c_device
 from adafruit_motor import stepper
 from subprocess import check_output
-from motors import motors as motors
+
 
 release_cube = 180 # angle for cube storage to release cube
 turn_magazine = 145 # steps for stepper to turn 90°
@@ -34,6 +34,7 @@ try:
     stepperKit = MotorKit(address=0x61,i2c=board.I2C())
 except:
     # TODO Print error to Display
+    print("Init error")
     time.sleep(3)
 magazin =  stepperKit.stepper1
 platform = stepperKit.stepper2

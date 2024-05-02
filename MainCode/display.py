@@ -10,7 +10,7 @@ from displaylib import LCD_driver as LCD
 
 class lcddisplay:
     def __init__(self) -> None:
-        LCD.init() 
+        LCD.init()
         LCD.string("LCD Initialized", LCD.LCD_LINE_1)  
          
     LINE_1 = 1
