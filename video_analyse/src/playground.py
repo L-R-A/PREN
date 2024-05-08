@@ -223,15 +223,14 @@ def main():
     # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
 
-    i = 100
+    i = 0
 
     while True: 
         # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
 
-        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"./raspberry/tmp/temp_save/Image2_2.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"./raspberry/tmp/temp_save/Image2_2.jpg"))
 
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9001_1.jpg"))
-
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/3901c79d-3576-4a63-a8b5-52f7c0774731/image{i}_1.jpg"))
 
         image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
 
@@ -240,7 +239,7 @@ def main():
 
         frame = hp.Preprocess.convert_to_BGR(frame)
 
-        frame = hp.Video.translate_image(frame)
+        # frame = hp.Video.translate_image(frame)
 
 
         # frame = frame[0:115, 10:150]
