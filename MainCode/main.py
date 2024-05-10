@@ -59,7 +59,7 @@ def main():
             motors.init_position()
 
         
-        lcd.print("SKOEGAHOF READY PRESS START")
+        lcd.print("SKOGAHOEF READY PRESS START")
 
         ################## START RUN ##################
 
