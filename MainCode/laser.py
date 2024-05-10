@@ -14,35 +14,38 @@ import adafruit_bus_device.i2c_device as i2c_device
 from adafruit_motor import stepper
 from subprocess import check_output
 
-class laser:
-    i2c = busio.I2C(board.SCL, board.SDA)
-    lightIN = digitalio.DigitalInOut(board.D17) # Photo Resistor
-    lightIN.direction = digitalio.Direction.INPUT
+i2c = busio.I2C(board.SCL, board.SDA)
+lightIN = digitalio.DigitalInOut(board.D17) # Photo Resistor
+lightIN.direction = digitalio.Direction.INPUT
+laser = digitalio.DigitalInOut(board.D18) # Laser
+laser.direction = digitalio.Direction.OUTPUT
+run = False
 
+class laser:
     def laser_cannon_deth_sentence():
-        while(True):
-            laser = digitalio.DigitalInOut(board.D18) # Laser
-            laser.direction = digitalio.Direction.OUTPUT
-            
-            while(run):
-                laser.value=True
-                time.sleep(0.008)
-                laser.value=False
-                time.sleep(0.002)
+        global run
+        run = True
+        while(run):
+            laser.value=True
+            time.sleep(0.008)
+            laser.value=False
+            time.sleep(0.002)
 
     def laser_victim():
-        while(True):
-            global end_position
+        end_position
+        old_val = lightIN.value
+        for i in range(5):
+            time.sleep(0.008)
+            if (lightIN.value != old_val) & (lightIN.value == False):
+                end_position = False
+                #print("sensor active")
+            elif (lightIN.value == True) & (lightIN.value == old_val):
+                #print ("Endposition reached")
+                end_position = True
+                return True
             old_val = lightIN.value
-            sensor = False
-            while(run):
-                time.sleep(0.008)
-                if (lightIN.value != old_val) & (lightIN.value == False):
-                    sensor = True
-                    end_position = False
-                    #print("sensor active")
-                elif (lightIN.value == True) & (lightIN.value == old_val):
-                    #print ("Endposition reached")
-                    sensor = False
-                    end_position = True
-                old_val = lightIN.value
+        return False
+    
+    def end_laser():
+        global run
+        run = False
