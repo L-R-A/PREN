@@ -19,7 +19,8 @@ class lcddisplay:
     def clear(self):
         LCD.clear()
     
-    def print(self, message, line = 0):
+    #def print(self, message, line = 0):
+    def print(message, line = 0):
         LCD.clear()
         time.sleep(0.01)
         match(line):
