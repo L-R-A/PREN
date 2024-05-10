@@ -12,6 +12,7 @@ from cubedetection import CubeDetection
 from multiprocessing import Process
 import adafruit_bus_device.i2c_device as i2c_device
 #from adc import adc as adc
+import display.display
 from motors import motors
 from display import lcddisplay as disp
 from laser import laser

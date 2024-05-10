@@ -134,9 +134,6 @@ class Preprocess:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
         frame = cv2.bitwise_or(frame, frame, mask=color_mask)
-
-        # return Video.blur_mask(Preprocess.remove_isolated_blue_pixels(frame))
-        # return Video.blur_mask(Preprocess.remove_isolated_white_pixels(frame))
         return Video.blur_mask(frame)
 
 class Video:
@@ -204,6 +201,14 @@ class Video:
         M = np.float32([[1, 0, tx],
             [0, 1, ty]])
 
+        return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+    
+    def translate_y(frame, y = 2):
+        M = np.float32([[1, 0, 0], [0, 1, y]])
+        return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+    
+    def translate_x(frame, x = 1):
+        M = np.float32([[1, 0, x], [0, 1, 0]])
         return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
 
 class Augmentation:
