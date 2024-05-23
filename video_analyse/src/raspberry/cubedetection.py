@@ -72,7 +72,7 @@ class CubeDetection:
             image_one = Image.open(full_path_one)
             image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
             image_one = np.array(image_one)[:, :, ::-1]
-            image_one = image_one[0:115, 10:150]
+            # image_one = image_one[0:115, 10:150]
             image_one = hp.Preprocess.start(image_one)
 
             normalized_one = CubeDetection.normalize_images(image_one)
@@ -85,7 +85,7 @@ class CubeDetection:
             image_two = Image.open(full_path_two)
             image_two = image_two.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
             image_two = np.array(image_two)[:, :, ::-1]
-            image_two = image_two[0:115, 10:150]
+            # image_two = image_two[0:115, 10:150]
             image_two = hp.Preprocess.start(image_two)
 
             normalized_two = CubeDetection.normalize_images(image_two)
