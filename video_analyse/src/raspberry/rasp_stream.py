@@ -6,7 +6,7 @@ class Stream:
     PWD = '463997'
     PARAM = 'pren_profile_small'
 
-    def getFrame(width, height, f, amount=1, delay=1):
+    def getFrame(width, height, f, amount=1, delay=0):
         cap = cv2.VideoCapture('rtsp://'+
         Stream.NAME+
         ':'+Stream.PWD+
@@ -21,7 +21,7 @@ class Stream:
         
         frame = None
         c = 0
-        while c < f:
+        while c <= f:
             ret, frame = cap.read()
             c += 1
 
@@ -29,7 +29,8 @@ class Stream:
 
         while c <= (f + (amount * delay)) and (found < amount):
             ret, frame = cap.read()
-            if ((delay == 0.0) or (c == f) or c % delay == 0):
+            
+            if ((c == (f + 1)) or c % delay == 0):
                 print("FRAME FOUND: " + str(c))
                 
                 frame = cv2.resize(frame, (width, height))
