@@ -1,4 +1,5 @@
 from display import lcddisplay as lcd
+from adafruit_motorkit import MotorKit
 import time
 
 lcd = lcd()
