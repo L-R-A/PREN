@@ -21,6 +21,7 @@ from hallsensor import hal
 
 def main():
     ################################# MAIN INIT #################################
+    run_once = False
     lcd = disp()
     lcd.clear()
     ip = str(check_output(['hostname','-I']))
@@ -47,6 +48,7 @@ def main():
 
 
     p_init.join()
+    timeout = time.time()
     ############################### MAIN LOOP ###############################
     while(True):
         cubes = ["","","","","","","",""] # yellow, red, blue
@@ -57,22 +59,35 @@ def main():
             lcd.print("",lcd.LINE_1)
             lcd.print(f"{round(t_run,1)}s, {round(energy.value,1)}Ws",lcd.LINE_2)
             while(not start.value):
+                if (time.time()-timeout) >= 240:
+                    off.turn_off_timeout(lcd)
+                    timeout = time.time()
+                    lcd.clear()
                 lcd.print("REMOVE CUBES",lcd.LINE_1)
                 time.sleep(0.01)
             motors.init_position()
         
         lcd.print("SKOGAHOEF READY PRESS START")
 
+
         ################## START RUN ##################
         while(not start.value):
             time.sleep(0.05)
+            if (time.time()-timeout) >= 240:
+                off.turn_off_timeout(lcd)
+                #if shutdown canceled set new time
+                lcd.clear()
+                lcd.print("SKOGAHOEF READY PRESS START")
+                timeout = time.time()
+
 
         while(start.value):
             time.sleep(0.05)
-
+        run_once = True
         #lcd.progressbartimed(0,10,1,message="STARTING")
         #lcd.print("STARTING",lcd.LINE_2)
         t_start = time.time()
+        timeout = time.time()
         statled.value = True
         # start power measurement
         p_adc = Process(target=adc.start_measure_power,args=(energy,))
@@ -120,6 +135,7 @@ def main():
 
 # RUN PROGRAM
 main()
+
 
 
 

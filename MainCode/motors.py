@@ -18,8 +18,9 @@ from hallsensor import hal
 
 
 release_cube = 180 # angle for cube storage to release cube
-turn_magazine = 138 # steps for stepper to turn 90°
-platform_move = 3100 # steps for platform to move up or down
+#turn_magazine = 138 # steps for stepper to turn 90° OLD VALUE
+turn_magazine = 140 # steps for stepper to turn 90° OLD VALUE
+platform_move = 3600 # steps for platform to move up or down
 drop_time = 0.5
 try:
     servoKit = ServoKit(channels=16,address=0x42)
@@ -140,6 +141,9 @@ class motors:
                 slot[num_red]=slot[num_red]+1
                 slot[num_blue]=slot[num_blue]+1
                 number_of_cubes -= 3
+                cubes[i] = ''
+                cubes[num_red]=''
+                cubes[num_blue]=''
                 if number_of_cubes == 0:
                     return
                 if yellow == cubes[i+4] and red == cubes[num_red_high] and blue == cubes[num_blue_high]:
@@ -152,6 +156,9 @@ class motors:
                     slot[num_red]=slot[num_red]+1
                     slot[num_blue]=slot[num_blue]+1
                     number_of_cubes -= 3
+                    cubes[i+4] = ''
+                    cubes[num_red_high]=''
+                    cubes[num_blue_high]=''
                     if number_of_cubes == 0:
                         return
             elif yellow == cubes[i] and red == cubes[num_red]:
@@ -163,6 +170,8 @@ class motors:
                 slot[i]=slot[i]+1
                 slot[num_red]=slot[num_red]+1
                 number_of_cubes -= 2
+                cubes[i] = ''
+                cubes[num_red]=''
                 if number_of_cubes == 0:
                     return
                 if yellow == cubes[i+4] and red == cubes[num_red_high]:
@@ -174,6 +183,8 @@ class motors:
                     slot[i]=slot[i]+1
                     slot[num_red]=slot[num_red]+1
                     number_of_cubes -= 2
+                    cubes[i+4] = ''
+                    cubes[num_red_high]=''
                     if number_of_cubes == 0:
                         return
             elif yellow == cubes[i] and blue == cubes[num_blue]:
@@ -185,6 +196,8 @@ class motors:
                 slot[i]=slot[i]+1
                 slot[num_blue]=slot[num_blue]+1
                 number_of_cubes -= 2
+                cubes[i] = ''
+                cubes[num_blue]=''
                 if number_of_cubes == 0:
                     return
                 if yellow == cubes[i+4] and blue == cubes[num_blue_high]:
@@ -196,6 +209,8 @@ class motors:
                     slot[i]=slot[i]+1
                     slot[num_blue]=slot[num_blue]+1
                     number_of_cubes -= 2
+                    cubes[i+4] = ''
+                    cubes[num_blue_high]=''
                     if number_of_cubes == 0:
                         return
             elif red == cubes[num_red] and blue == cubes[num_blue]:
@@ -207,6 +222,8 @@ class motors:
                 slot[num_red]=slot[num_red]+1
                 slot[num_blue]=slot[num_blue]+1
                 number_of_cubes -= 2
+                cubes[num_red]=''
+                cubes[num_blue]=''
                 if number_of_cubes == 0:
                     return
                 if red == cubes[num_red_high] and blue == cubes[num_blue_high]:
@@ -218,6 +235,8 @@ class motors:
                     slot[num_red]=slot[num_red]+1
                     slot[num_blue]=slot[num_blue]+1
                     number_of_cubes -= 2
+                    cubes[num_red_high]=''
+                    cubes[num_blue_high]=''
                     if number_of_cubes == 0:
                         return
             elif yellow == cubes[i]:
@@ -228,6 +247,7 @@ class motors:
                 time.sleep(drop_time)
                 slot[i]=slot[i]+1
                 number_of_cubes -= 1
+                cubes[i] = ''
                 if number_of_cubes == 0:
                     return
                 if yellow == cubes[i+4]:
@@ -238,6 +258,7 @@ class motors:
                     time.sleep(drop_time)
                     slot[i]=slot[i]+1
                     number_of_cubes -=1
+                    cubes[i+4] = ''
                     if number_of_cubes == 0:
                         return
             elif red == cubes[num_red]:
@@ -248,6 +269,7 @@ class motors:
                 time.sleep(drop_time)
                 slot[num_red]=slot[num_red]+1
                 number_of_cubes -= 1
+                cubes[num_red]=''
                 if number_of_cubes == 0:
                     return
                 if red == cubes[num_red_high]:
@@ -258,26 +280,29 @@ class motors:
                     time.sleep(drop_time)
                     slot[num_red]=slot[num_red]+1
                     number_of_cubes -=1
+                    cubes[num_red_high]=''
                     if number_of_cubes == 0:
                         return
             elif blue == cubes[num_blue]:
                 print(f"drop blue: {i}")
-                servo_red.angle = release_cube
+                servo_blue.angle = release_cube
                 time.sleep(drop_time)
-                servo_red.angle = 0
+                servo_blue.angle = 0
                 time.sleep(drop_time)
                 slot[num_blue]=slot[num_blue]+1
                 number_of_cubes -= 1
+                cubes[num_blue]=''
                 if number_of_cubes == 0:
                     return
                 if blue == cubes[num_blue_high]:
                     print(f"drop High blue: {i}")
-                    servo_red.angle = release_cube
+                    servo_blue.angle = release_cube
                     time.sleep(drop_time)
-                    servo_red.angle = 0
+                    servo_blue.angle = 0
                     time.sleep(drop_time)
                     slot[num_blue]=slot[num_blue]+1
                     number_of_cubes -= 1
+                    cubes[num_blue_high]=''
                     if number_of_cubes == 0:
                         return
 
@@ -310,37 +335,49 @@ class motors:
                 time.sleep(drop_time)
                 servo_yellow.angle = servo_red.angle = servo_blue.angle = 0
                 time.sleep(drop_time)
+                cubes[i] = ''
+                cubes[num_red]=''
+                cubes[num_blue]=''
             elif yellow == cubes[i] and red == cubes[num_red]:
                 servo_yellow.angle = servo_red.angle  = release_cube
                 time.sleep(drop_time)
                 servo_yellow.angle = servo_red.angle =  0
                 time.sleep(drop_time)
+                cubes[i] = ''
+                cubes[num_red]=''
             elif yellow == cubes[i] and blue == cubes[num_blue]:
                 servo_yellow.angle = servo_blue.angle = release_cube
                 time.sleep(drop_time)
                 servo_yellow.angle = servo_blue.angle = 0
                 time.sleep(drop_time)
+                cubes[i] = ''
+                cubes[num_blue]=''
             elif red == cubes[num_red] and blue == cubes[num_blue]:
                 servo_red.angle = servo_blue.angle = release_cube
                 time.sleep(drop_time)
                 servo_red.angle = servo_blue.angle = 0
                 time.sleep(drop_time)
+                cubes[num_red]=''
+                cubes[num_blue]=''
             elif yellow == cubes[i]:
                 servo_yellow.angle = release_cube
                 time.sleep(drop_time)
                 servo_yellow.angle = 0
                 time.sleep(drop_time)
+                cubes[i]=''
             elif red == cubes[num_red]:
                 print(f"drop red: {i}")
                 servo_red.angle = release_cube
                 time.sleep(drop_time)
                 servo_red.angle = 0
                 time.sleep(drop_time)
+                cubes[num_red]=''
             elif blue == cubes[num_blue]:
-                servo_red.angle = release_cube
+                servo_blue.angle = release_cube
                 time.sleep(drop_time)
-                servo_red.angle = 0
+                servo_blue.angle = 0
                 time.sleep(drop_time)
+                cubes[num_blue]=''
 
             if i > 5:
                 # turn magazin for 90°
@@ -501,22 +538,26 @@ class motors:
         #Process_Laser = Process(target=laser.laser_cannon_deth_sentence,args=(()))
         #Process_Laser.start()
         while(not endPosLow.value):
-            if laser.laser_barrier():
-                platform.release()
-                break    
-            platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
-        #Process_Laser.kill()
-        for i in range(50):
-            platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+            for i in range(platform_move - 450):
+                platform.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
+            break
         platform.release()
+        #Process_Laser.kill()
+        #for i in range(50):
+        #    platform.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+        #platform.release()
     
     def center_cubes():
-        servo_push1.angle = 155
-        servo_push2.angle = 155
+        servo_push1.angle = 165
+        servo_push2.angle = 165
         for i in range(15):
-            servo_push1.angle = 155+i
-            servo_push2.angle = 155+i
+            servo_push1.angle = 165+i
+            servo_push2.angle = 165+i
             time.sleep(0.15)
+
+        #for i in range(5):
+        #    servo_push1.angle = 175+i
+        #    time.sleep(0.15)
    
         time.sleep(0.2)
 

@@ -47,7 +47,7 @@ class adc:
             chan = chan2
         elif channel == 3:
             chan = chan3
-        current = (chan.voltage - 2.45)/0.066
+        current = (chan.voltage - 2.439)/0.066
         #current = (0.066/(chan.voltage - 2.45))*0.33
         return current
 
@@ -67,7 +67,7 @@ class adc:
                 energy_ws = energy_ws + (adc.get_adc_current(voltage_12) * 12 * elapsed_time)
             energy_ret.value = energy_ws
             start = time.time()
-            time.sleep(0.02) 
+            time.sleep(0.04) 
 
 
     def test_sensor():
@@ -82,11 +82,9 @@ class adc:
                 first = False
             if adc.get_adc_current(voltage_5) > 0:
                 energy_ws = energy_ws + (adc.get_adc_current(voltage_5) * 5 * elapsed_time)
-                #print(adc.get_adc_current(voltage_5))
+                print(adc.get_adc_current(voltage_5))
             if adc.get_adc_current(voltage_12) > 0:
                 energy_ws = energy_ws + (adc.get_adc_current(voltage_12) * 12 * elapsed_time)
-            print(energy_ws)
+            #print(energy_ws)
             start = time.time()
             time.sleep(0.1) 
-
-adc.test_sensor()
