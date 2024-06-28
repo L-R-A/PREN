@@ -10,8 +10,8 @@ import sys
 from time import sleep
 import shutil
 
-IMAGE_HEIGHT_PX = 120
-IMAGE_WIDTH_PX = 160
+IMAGE_HEIGHT_PX = 30
+IMAGE_WIDTH_PX = 40
 TEMP_PATH = os.path.join('./', 'tmp', 'temp_save')
 MODEL_NAME = "model.keras"
 REDUNDANCY = 10
@@ -58,6 +58,13 @@ class CubeDetection:
         
         return result
     
+    def get_hightest_probability(arrays):
+        result = arrays[0]
+
+        for array in arrays[1:]:
+            result = np.maximum(result, array)
+
+        return result
 
     def predict_positions(image_path_one, image_path_two):
 
@@ -103,12 +110,19 @@ class CubeDetection:
         common_prediction = CubeDetection.get_most_common(predictions_max)
         common_readable = np.vectorize(label_mapping.get)(common_prediction)
 
+        highest_probabilty = CubeDetection.get_hightest_probability(predictions)
+        highest_prediction = np.argmax(highest_probabilty, axis=-1)
+        highest_readable = np.vectorize(label_mapping.get)(highest_prediction)
+
         print("\n")
 
         print("-- OUTPUT \n")
 
         print("--- MOST COMMON: \n")
         print(common_readable)
+
+        print("--- HIGHEST PROB: \n")
+        print(highest_readable)
 
         print()
         print("\n\n")
@@ -120,7 +134,6 @@ class CubeDetection:
 
         print("RUNNING IN PROD MODE\n")
         print(f"REDUNDANCIES: {REDUNDANCY}")
-
         print("- SAVING FRAMES")
         response = CubeDetection.save_frames(REDUNDANCY)
 
@@ -150,25 +163,25 @@ class CubeDetection:
 
 # ----------------- REMOVE THIS: ONLY FOR TESTING PURPOSES ------------------------
 
-i = 1
+# i = 1
 
-while True:
+# while True:
 
-    print("Round: " + str(i) + "\n")
-    result = CubeDetection.start()
+#     print("Round: " + str(i) + "\n")
+#     result = CubeDetection.start()
 
-    print(hp.JSON.convert_numpy_to_json(result))
+#     print(hp.JSON.convert_numpy_to_json(result))
 
 
-    if (result != ['red', 'blue', 'red', 'red', 'blue', 'yellow', '', '']):
-        print("ERROR IN PREDICTION")
-        break;
+#     if (result != ['blue', 'red', 'yellow', 'blue', '', 'red', '', 'red']):
+#         print("ERROR IN PREDICTION")
+#         break;
     
-    shutil.rmtree("./tmp")
+#     shutil.rmtree("./tmp")
     
-    time.sleep(1.5)
+#     time.sleep(1.5)
     
     
-    i = i + 1
+#     i = i + 1
 
 # ----------------- REMOVE THIS: ONLY FOR TESTING PURPOSES ------------------------

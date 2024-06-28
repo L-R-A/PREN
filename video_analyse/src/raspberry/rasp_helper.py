@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import json
 from datetime import datetime
+from datetime import timezone
 
 class HSVRanges:
     red_color = [
@@ -36,8 +37,8 @@ class HSVRanges:
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 180]),
-            "upper_bounds": np.array([255, 65 , 255])
+            "lower_bounds": np.array([0, 0, 185]),
+            "upper_bounds": np.array([255, 40, 255])
         }
     ]
 
@@ -100,7 +101,7 @@ class JSON:
     def convert_numpy_to_json(array):
         
         data = {
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "config": {str(i+1): value for i, value in enumerate(array)}
         }
         
