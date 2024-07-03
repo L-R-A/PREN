@@ -8,12 +8,12 @@ class HSVRanges:
     red_color = [
         {
             "color_name": "red",
-            "lower_bounds": np.array([0, 26, 58]),
-            "upper_bounds": np.array([13, 255, 255])
+            "lower_bounds": np.array([0, 20, 65]),
+            "upper_bounds": np.array([14, 255, 255])
         },
         {
             "color_name": "red",
-            "lower_bounds": np.array([176, 25, 56]),
+            "lower_bounds": np.array([174, 20, 65]),
             "upper_bounds": np.array([180, 255, 255]) 
         }
     ]
@@ -21,15 +21,15 @@ class HSVRanges:
     yellow_color = [
         {
             "color_name": "yellow",
-            "lower_bounds": np.array([10, 100, 100]),
-            "upper_bounds": np.array([30, 255, 255])
+            "lower_bounds": np.array([15, 30, 100]),
+            "upper_bounds": np.array([60, 255, 255]) 
         }
     ]
 
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100, 80, 50]),
+            "lower_bounds": np.array([100,95,50]),
             "upper_bounds": np.array([140, 255, 255])
         },
     ]
@@ -38,7 +38,7 @@ class HSVRanges:
         {
             "color_name": "light grey",
             "lower_bounds": np.array([0, 0, 180]),
-            "upper_bounds": np.array([255, 65, 255])
+            "upper_bounds": np.array([255,65, 255])
         }
     ]
 
@@ -80,6 +80,8 @@ class Preprocess:
 
     def start(frame):
         frame = Preprocess.darken_frame(frame, 0.95)
+
+        frame = Preprocess.black_out(frame, 0.14, 0.16, 0.05, 0.2)
 
         frame = Preprocess.process_color(frame, HSVRanges.light_grey_color, BGRColors.white_color)
         frame = Preprocess.process_color(frame, HSVRanges.red_color, BGRColors.red_color)
