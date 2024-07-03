@@ -8,12 +8,12 @@ class HSVRanges:
     red_color = [
         {
             "color_name": "red",
-            "lower_bounds": np.array([0, 100, 20]),
-            "upper_bounds": np.array([10, 255, 255])
+            "lower_bounds": np.array([0, 26, 58]),
+            "upper_bounds": np.array([13, 255, 255])
         },
         {
             "color_name": "red",
-            "lower_bounds": np.array([160, 100, 20]),
+            "lower_bounds": np.array([176, 25, 56]),
             "upper_bounds": np.array([180, 255, 255]) 
         }
     ]
@@ -21,15 +21,15 @@ class HSVRanges:
     yellow_color = [
         {
             "color_name": "yellow",
-            "lower_bounds": np.array([15, 100, 100]),
-            "upper_bounds": np.array([50, 255, 255]) 
+            "lower_bounds": np.array([10, 100, 100]),
+            "upper_bounds": np.array([30, 255, 255])
         }
     ]
 
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100, 70, 50]),
+            "lower_bounds": np.array([100, 80, 50]),
             "upper_bounds": np.array([140, 255, 255])
         },
     ]
@@ -37,8 +37,8 @@ class HSVRanges:
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 185]),
-            "upper_bounds": np.array([255, 40, 255])
+            "lower_bounds": np.array([0, 0, 180]),
+            "upper_bounds": np.array([255, 65, 255])
         }
     ]
 
@@ -63,6 +63,20 @@ class Preprocess:
     
     def convert_to_BGR(frame):
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    
+    def black_out(frame, left=0.2, right=0.2, top=0, bottom=0):
+        height, width, _ = frame.shape
+        blackout_left = int(width * left)
+        blackout_right = int(width * right)
+        blackout_top = int(height * top)
+        blackout_bottom = int(height * bottom)
+
+        frame[:, :blackout_left] = (0, 0, 0)       # Left side
+        frame[:, width - blackout_right:] = (0, 0, 0)  # Right side
+        frame[:blackout_top, :] = (0, 0, 0)       # Top side
+        frame[height - blackout_bottom:, :] = (0, 0, 0)  # Bottom side
+
+        return frame
 
     def start(frame):
         frame = Preprocess.darken_frame(frame, 0.95)

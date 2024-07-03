@@ -28,7 +28,7 @@ class CubeDetection:
             print("-- GETTING FRAMES FROM LIVESTREAM")
             frames_angle_one = st.Stream.getFrame(640, 480, 0, redundancy, 1)
             print("--- STARTPOSITIONS RETRIEVED")
-            frames_angle_two = st.Stream.getFrame(640, 480, 285, redundancy, 1)
+            frames_angle_two = st.Stream.getFrame(640, 480, 290, redundancy, 1)
             print("--- ENDPOSITION RETRIEVED\n")
 
             print("-- SAVING FRAMES TO DISK")
@@ -173,7 +173,7 @@ class CubeDetection:
 #     print(hp.JSON.convert_numpy_to_json(result))
 
 
-#     if (result != ['blue', 'red', 'yellow', 'blue', '', 'red', '', 'red']):
+#     if (result != ['blue', 'red', '', 'blue', 'yellow', 'red', '', 'red']):
 #         print("ERROR IN PREDICTION")
 #         break;
     
