@@ -223,21 +223,58 @@ def main():
     # video = hp.Video(os.path.join(os.path.dirname(os.path.abspath(__file__)), VIDEO_PATH))
     exit_analyse = False
 
-    i = 0
+    i = 1
 
     while True: 
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Test/Images/Image_9{i}_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Train/Images/Image_{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/1f7534fa-6ee2-4e6a-a921-2a635a5fe917/Train/Images/Image_{i}_2.jpg"))
 
-        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"./raspberry/tmp/temp_save/Image2_2.jpg"))
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"./raspberry/tmp/temp_save/image1_2.jpg"))
 
-        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/3901c79d-3576-4a63-a8b5-52f7c0774731/image{i}_1.jpg"))
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/3a9921a1-74cb-4c75-a3cd-f70fea582a6f/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/3a9921a1-74cb-4c75-a3cd-f70fea582a6f/image{i}_2.jpg"))
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/464404c7-d7bf-44f6-95ac-d792597029e6/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/464404c7-d7bf-44f6-95ac-d792597029e6/image{i}_2.jpg"))
+
+        image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/98e2963c-1dc7-4687-844e-0f76f0bedf09/image{i}_1.jpg"))
+        image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/98e2963c-1dc7-4687-844e-0f76f0bedf09/image{i}_2.jpg"))
+
+       
+
+
+        # OLDDD
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/46ae10ae-bf46-46a8-81b0-a69dfdef9d51/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/46ae10ae-bf46-46a8-81b0-a69dfdef9d51/image{i}_2.jpg"))
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/f7cc00ed-27bc-47f5-aca3-0cfd83091176/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/f7cc00ed-27bc-47f5-aca3-0cfd83091176/image{i}_2.jpg"))
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/7b923782-f604-4306-ad58-3f3461a36d76/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/7b923782-f604-4306-ad58-3f3461a36d76/image{i}_2.jpg"))
+        
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/53f6cc9b-0551-4b7b-a7ca-6755baeb1eeb/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/53f6cc9b-0551-4b7b-a7ca-6755baeb1eeb/image{i}_2.jpg"))
+
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/80747358-0e05-4310-84ad-7ec4eff62942/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/80747358-0e05-4310-84ad-7ec4eff62942/image{i}_2.jpg"))
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/9ab3c5e8-1e9e-4863-a3b0-cd966c758560/image{i}_1.jpg"))
+        # image_two = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/ressources/9ab3c5e8-1e9e-4863-a3b0-cd966c758560/image{i}_2.jpg"))
+        
+        
+
+        # image_one = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"../tmp/train/ressources/bundle/05c1d782-71b2-4e21-a857-97af015c2fc4/Train/Images/Image_225_1.jpg"))
 
         image_one = image_one.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
-
-        frame = np.array(image_one)[:, :, ::-1]
         frame = np.array(image_one)
-
         frame = hp.Preprocess.convert_to_BGR(frame)
+
+        # image_two = image_two.resize((IMAGE_WIDTH_PX, IMAGE_HEIGHT_PX))
+        # frame2 = np.array(image_two)
+        # frame2 = hp.Preprocess.convert_to_BGR(frame2)
+
 
         # frame = hp.Video.translate_image(frame)
 
@@ -247,10 +284,19 @@ def main():
         # frame = hp.Augmentation.black_spots(frame, 10)
 
         hp.Out.image_show("Original", frame, IN_DEBUG_MODE)
+        # hp.Out.image_show("Original2", frame2, IN_DEBUG_MODE)
 
         frame = hp.Preprocess.start(frame)
+        frame = hp.Video.zoom(frame, IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX)
+        frame = hp.Preprocess.convert_to_BGR(frame)
+        # frame2 = hp.Preprocess.start(frame2)
+        # frame2 = hp.Video.zoom(frame2, IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX)
+        # frame2 = hp.Preprocess.convert_to_BGR(frame2)
+
 
         hp.Out.image_show("Processed", frame, IN_DEBUG_MODE)
+        # hp.Out.image_show("Processed2", frame2, IN_DEBUG_MODE)
+
         
         if IN_DEBUG_MODE:
 

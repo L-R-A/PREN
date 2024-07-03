@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import json
+import random
 
 class HSVRanges:
     red_color = [
@@ -27,7 +28,7 @@ class HSVRanges:
     blue_color = [
         {
             "color_name": "blue",
-            "lower_bounds": np.array([100, 70, 50]),
+            "lower_bounds": np.array([100, 80, 50]),
             "upper_bounds": np.array([140, 255, 255])
         },
     ]
@@ -35,8 +36,11 @@ class HSVRanges:
     light_grey_color = [
         {
             "color_name": "light grey",
-            "lower_bounds": np.array([0, 0, 180]),
-            "upper_bounds": np.array([255, 65 , 255])
+            "lower_bounds": np.array([0, 0, 185]),
+            "upper_bounds": np.array([255, 40, 255])
+
+            # "lower_bounds": np.array([0, 0, 180]), #IF SUN IS NOT THERE THIS WORKS VERY GOOD
+            # "upper_bounds": np.array([255, 65 , 255])
         }
     ]
 
@@ -76,7 +80,7 @@ class Preprocess:
 
         for contour in contours:
             # Minimal white area (pixles) to be not ignored
-            if cv2.contourArea(contour) > 10: 
+            if cv2.contourArea(contour) > (500 / 64): 
                 cv2.drawContours(mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
             else:
                 cv2.drawContours(mask, [contour], -1, (0, 0, 0), thickness=cv2.FILLED)
@@ -133,7 +137,8 @@ class Preprocess:
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = Mask.create_color_mask(hsv, HSVRanges.red_color + HSVRanges.blue_color + HSVRanges.yellow_color + HSVRanges.light_grey_color)
-        frame = cv2.bitwise_or(frame, frame, mask=color_mask)
+        frame =  cv2.bitwise_or(frame, frame, mask=color_mask)
+        # frame = Preprocess.remove_isolated_white_pixels(frame)
         return Video.blur_mask(frame)
 
 class Video:
@@ -193,12 +198,16 @@ class Video:
         return cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
     
     def translate_image(frame):
-        translation_range = (-10, 10)
+        translation_range = (-1, 1)
 
-        tx = np.random.randint(translation_range[0], translation_range[1])
-        ty = np.random.randint(translation_range[0], translation_range[1])
+        # tx = np.random.randint(translation_range[0], translation_range[1])
+        # ty = np.random.randint(translation_range[0], translation_range[1])
 
-        M = np.float32([[1, 0, tx],
+        values = [-1, -0.5, 0, 0.5, 1]
+        ty = random.choice(values)
+
+    
+        M = np.float32([[1, 0, 0],
             [0, 1, ty]])
 
         return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
@@ -210,6 +219,58 @@ class Video:
     def translate_x(frame, x = 1):
         M = np.float32([[1, 0, x], [0, 1, 0]])
         return cv2.warpAffine(frame, M, (frame.shape[1], frame.shape[0]))
+    
+
+    def zoom(frame, target_height, target_width):
+        # Convert to grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Apply a threshold to binarize the image
+        _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+
+        # Find contours
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Filter out small contours based on area
+        min_area = 50  # Adjust this value based on the size of small regions to ignore
+        filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) >= min_area]
+
+        # Create an empty mask to draw the filtered contours
+        mask = np.zeros_like(gray)
+
+        # Draw the filtered contours on the mask
+        cv2.drawContours(mask, filtered_contours, -1, 255, thickness=cv2.FILLED)
+
+        # Find the bounding box of the non-black regions
+        coords = cv2.findNonZero(mask)
+        x, y, w, h = cv2.boundingRect(coords)
+
+        # Calculate the aspect ratio of the original bounding box
+        aspect_ratio = w / h
+
+        # Target dimensions
+        target_aspect_ratio = target_width / target_height
+
+        # Adjust the bounding box to maintain the target aspect ratio
+        if aspect_ratio > target_aspect_ratio:
+            new_height = int(w / target_aspect_ratio)
+            new_y = max(y - (new_height - h) // 2, 0)
+            if new_y + new_height > frame.shape[0]:
+                new_y = frame.shape[0] - new_height
+            cropped = frame[new_y:new_y+new_height, x:x+w]
+        else:
+            new_width = int(h * target_aspect_ratio)
+            new_x = max(x - (new_width - w) // 2, 0)
+            if new_x + new_width > frame.shape[1]:
+                new_x = frame.shape[1] - new_width
+            cropped = frame[y:y+h, new_x:new_x+new_width]
+
+        # Resize the cropped image to 160x120
+        resized = cv2.resize(cropped, (target_width, target_height), interpolation=cv2.INTER_LINEAR)
+
+        # Convert the resized image to RGB for displaying
+        return cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+
 
 class Augmentation:
     def black_spots(image, num_spots=5, spot_size_range=(20, 40)):
