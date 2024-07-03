@@ -548,12 +548,19 @@ class motors:
         #platform.release()
     
     def center_cubes():
-        servo_push1.angle = 165
-        servo_push2.angle = 165
+        servo_push1.angle = 140
+        servo_push2.angle = 140
+        
+        for i in range(25):
+            servo_push1.angle = 140+i
+            servo_push2.angle = 140+i
+            time.sleep(0.05)
+
+
         for i in range(15):
             servo_push1.angle = 165+i
             servo_push2.angle = 165+i
-            time.sleep(0.15)
+            time.sleep(0.07)
 
         #for i in range(5):
         #    servo_push1.angle = 175+i

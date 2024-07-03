@@ -16,6 +16,7 @@ from laser import laser
 from subprocess import check_output
 from turn_off import off
 from hallsensor import hal
+from api import REST
 
 
 
@@ -96,7 +97,13 @@ def main():
         # start img processing
         p_lcd = Process(target=lcd.progressbartimed,args=(0,50,25,True,'IMG PROC'))
         p_lcd.start()
+        p_rest_start = Process(target=REST.start_request,args=())
+        p_rest_start.start()
+        #REST.start_request()
         cubes = CubeDetection.start()
+        p_rest_config = Process(target=REST.config_request,args=(cubes,))
+        p_rest_config.start()
+        #REST.config_request(cubes)
         p_lcd.kill()
         lcd.clear()
 
@@ -123,6 +130,9 @@ def main():
         lcd.clear()
 
         # Accoustic Signal
+        #REST.end_request()
+        p_rest_end = Process(target=REST.end_request,args=())
+        p_rest_end.start()
         t_end = time.time()
         p_adc.kill()
         t_run = t_end - t_start
